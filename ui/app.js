@@ -39,20 +39,30 @@
       btnClear: "Vider la liste",
       btnClean: "Nettoyer",
       btnFolder: "Dossier",
-      btnDetail: "Aperçu / Éditer",
-      previewTitle: "Métadonnées actuelles",
+      btnDetail: "Voir / éditer",
+      previewTitle: "Métadonnées présentes",
+      previewHint: "Chaque ligne indique le champ, ce qu'il signifie et sa valeur actuelle.",
       previewEmpty: "Aucune métadonnée détectée.",
-      editTitle: "Éditer / ajouter",
+      editTitle: "Ajouter / éditer les métadonnées",
+      editHint: "Renseignez un champ pour l'ajouter, videz-le pour le retirer. L'original n'est jamais modifié.",
       fArtist: "Auteur / Artiste",
+      fArtistHint: "Personne créditée comme auteur de l'image.",
       fCopyright: "Copyright",
+      fCopyrightHint: "Mention de droits d'auteur.",
       fDescription: "Description",
+      fDescriptionHint: "Légende ou description de l'image.",
       fSoftware: "Logiciel",
+      fSoftwareHint: "Appareil ou logiciel ayant produit l'image.",
+      fDateTime: "Date de prise de vue",
+      fDateTimeHint: "Date/heure de prise de vue (format AAAA:MM:JJ HH:MM:SS).",
       fLat: "GPS latitude",
+      fLatHint: "Coordonnée nord/sud (−90 à 90).",
       fLon: "GPS longitude",
+      fLonHint: "Coordonnée est/ouest (−180 à 180).",
       fClearGps: "Supprimer les coordonnées GPS",
-      editNote: "« Enregistrer » crée une copie *_edited (l'original reste intact). « Nettoyer » supprime toutes les métadonnées (*_clean).",
-      btnSaveEdits: "Enregistrer les modifications",
-      btnStripHere: "Nettoyer tout",
+      editNote: "« Enregistrer avec ces métadonnées » crée une copie *_edited (l'original reste intact). « Nettoyer » retire toutes les métadonnées (*_clean).",
+      btnSaveEdits: "Enregistrer avec ces métadonnées",
+      btnStripHere: "Nettoyer / retirer toutes les métadonnées",
       loadingMeta: "Lecture des métadonnées…",
       editedOk: "Enregistré → {name}",
       editError: "Échec de l'enregistrement : {err}",
@@ -104,20 +114,30 @@
       btnClear: "Clear list",
       btnClean: "Clean",
       btnFolder: "Folder",
-      btnDetail: "Preview / Edit",
-      previewTitle: "Current metadata",
+      btnDetail: "View / edit",
+      previewTitle: "Metadata present",
+      previewHint: "Each line shows the field, what it means and its current value.",
       previewEmpty: "No metadata detected.",
-      editTitle: "Edit / add",
+      editTitle: "Add / edit metadata",
+      editHint: "Fill a field to add it, clear it to remove it. The original is never modified.",
       fArtist: "Author / Artist",
+      fArtistHint: "Person credited as the author of the image.",
       fCopyright: "Copyright",
+      fCopyrightHint: "Copyright notice.",
       fDescription: "Description",
+      fDescriptionHint: "Caption or description of the image.",
       fSoftware: "Software",
+      fSoftwareHint: "Device or software that produced the image.",
+      fDateTime: "Capture date",
+      fDateTimeHint: "Capture date/time (format YYYY:MM:DD HH:MM:SS).",
       fLat: "GPS latitude",
+      fLatHint: "North/south coordinate (−90 to 90).",
       fLon: "GPS longitude",
+      fLonHint: "East/west coordinate (−180 to 180).",
       fClearGps: "Remove GPS coordinates",
-      editNote: "\"Save\" writes a *_edited copy (the original stays intact). \"Clean\" removes all metadata (*_clean).",
-      btnSaveEdits: "Save changes",
-      btnStripHere: "Clean all",
+      editNote: "\"Save with this metadata\" writes a *_edited copy (the original stays intact). \"Clean\" removes all metadata (*_clean).",
+      btnSaveEdits: "Save with this metadata",
+      btnStripHere: "Clean / remove all metadata",
       loadingMeta: "Reading metadata…",
       editedOk: "Saved → {name}",
       editError: "Save failed: {err}",
@@ -183,7 +203,9 @@
     $("countPill").textContent = arr.length ? String(arr.length) : "";
     arr.forEach((it) => {
       const card = document.createElement("div");
-      card.className = "img-card" + (it.cleaned ? " is-clean" : "");
+      card.className = "img-card" + (it.cleaned ? " is-clean" : "") +
+        (it.path === activePath ? " is-active" : "");
+      card.setAttribute("data-select", it.path);
 
       const tags = [];
       if (it.hasExif) tags.push(badge("warn", t("badgeExif")));
@@ -217,14 +239,27 @@
       wrap.appendChild(card);
     });
 
+    // Selecting a card (thumb / body) opens its inline metadata panel.
+    wrap.querySelectorAll("[data-select]").forEach((card) =>
+      card.addEventListener("click", (e) => {
+        if (e.target && e.target.closest && e.target.closest(".card-actions")) return;
+        selectItem(card.getAttribute("data-select"));
+      }));
     wrap.querySelectorAll("[data-detail]").forEach((b) =>
-      b.addEventListener("click", () => openMeta(b.getAttribute("data-detail"))));
+      b.addEventListener("click", (e) => { e.stopPropagation(); selectItem(b.getAttribute("data-detail")); }));
     wrap.querySelectorAll("[data-clean]").forEach((b) =>
-      b.addEventListener("click", () => stripOne(b.getAttribute("data-clean"))));
+      b.addEventListener("click", (e) => { e.stopPropagation(); stripOne(b.getAttribute("data-clean")); }));
     wrap.querySelectorAll("[data-remove]").forEach((b) =>
-      b.addEventListener("click", () => { items.delete(b.getAttribute("data-remove")); renderCards(); }));
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const p = b.getAttribute("data-remove");
+        items.delete(p);
+        if (p === activePath) closeMeta();
+        renderCards();
+      }));
     wrap.querySelectorAll("[data-folder]").forEach((b) =>
-      b.addEventListener("click", async () => {
+      b.addEventListener("click", async (e) => {
+        e.stopPropagation();
         const api = await apiReady();
         if (api && api.reveal) { try { await api.reveal(b.getAttribute("data-folder")); } catch (_) {} }
       }));
@@ -238,9 +273,13 @@
       const res = await api.pick_images();
       if (!res || !res.ok) return;
       let added = 0;
-      (res.items || []).forEach((it) => { if (upsert(it)) added += 1; });
+      let firstPath = null;
+      (res.items || []).forEach((it) => {
+        if (upsert(it)) { added += 1; if (!firstPath) firstPath = it.path; }
+      });
       renderCards();
       if (added) setStatus(fmt("statusAdded", { n: added }));
+      if (firstPath) selectItem(firstPath);
     } catch (e) { setStatus(fmt("statusError", { err: String((e && e.message) || e) })); }
   }
 
@@ -257,16 +296,18 @@
     const api = await apiReady();
     if (!api || !api.add_dropped) return;
     let added = 0;
+    let firstPath = null;
     for (const file of Array.from(fileList)) {
       if (!isSupported(file.name)) { setStatus(fmt("statusUnsupported", { name: file.name })); continue; }
       try {
         const dataUrl = await readAsDataURL(file);
         const res = await api.add_dropped(file.name, dataUrl);
-        if (res && res.ok && upsert(res.item)) added += 1;
+        if (res && res.ok && upsert(res.item)) { added += 1; if (!firstPath) firstPath = res.item.path; }
       } catch (_) {}
     }
     renderCards();
     if (added) setStatus(fmt("statusAdded", { n: added }));
+    if (firstPath) selectItem(firstPath);
   }
 
   /* ---------- Strip ---------- */
@@ -310,13 +351,14 @@
   async function clearList() {
     const api = await apiReady();
     items.clear();
+    closeMeta();
     renderCards();
     setStatus("");
     if (api && api.clear_temp) { try { await api.clear_temp(); } catch (_) {} }
   }
 
-  /* ---------- Metadata preview / edit dialog ---------- */
-  let metaPath = null;
+  /* ---------- Inline metadata panel (present + add/edit) ---------- */
+  let activePath = null;
 
   function escapeHtml(s) {
     return String(s == null ? "" : s)
@@ -331,11 +373,17 @@
       const block = document.createElement("div");
       block.className = "meta-group";
       const rows = (g.entries || [])
-        .map((e) => `<dt title="${escapeHtml(e.key)}">${escapeHtml(e.key)}</dt><dd>${escapeHtml(e.value)}</dd>`)
+        .map((e) =>
+          `<div class="meta-entry">` +
+            `<div class="me-label">${escapeHtml(e.label || e.key)}</div>` +
+            (e.hint ? `<div class="me-hint">${escapeHtml(e.hint)}</div>` : "") +
+            `<div class="me-value" title="${escapeHtml(e.value)}">${escapeHtml(e.value)}</div>` +
+          `</div>`)
         .join("");
       block.innerHTML =
         `<div class="meta-group-title">${escapeHtml(g.title)}</div>` +
-        `<dl class="meta-kv">${rows}</dl>`;
+        (g.desc ? `<div class="meta-group-desc">${escapeHtml(g.desc)}</div>` : "") +
+        `<div class="meta-entries">${rows}</div>`;
       wrap.appendChild(block);
     });
     $("metaEmpty").hidden = (groups || []).length > 0;
@@ -347,16 +395,18 @@
     $("fCopyright").value = f.copyright || "";
     $("fDescription").value = f.description || "";
     $("fSoftware").value = f.software || "";
+    $("fDateTime").value = f.dateTime || "";
     $("fLat").value = f.gpsLat || "";
     $("fLon").value = f.gpsLon || "";
     $("fClearGps").checked = false;
   }
 
-  async function openMeta(path) {
+  async function selectItem(path) {
     const it = items.get(path);
     if (!it) return;
-    metaPath = path;
-    const dlg = $("metaDialog");
+    activePath = path;
+    const panel = $("detailPanel");
+    if (panel) panel.hidden = false;
     $("metaName").textContent = it.name || "";
     $("metaFmt").textContent = `${it.format || "?"} · ${it.width}×${it.height} ${t("dimUnit")} · ${it.sizeText || ""}`;
     $("metaThumb").src = it.thumb || "";
@@ -365,11 +415,12 @@
     $("metaEmpty").hidden = true;
     $("metaFolder").hidden = true;
     fillForm(null);
-    if (dlg && dlg.showModal && !dlg.open) dlg.showModal();
+    renderCards();
     const api = await apiReady();
     if (!api || !api.read_metadata) { $("metaStatus").textContent = ""; return; }
     try {
       const res = await api.read_metadata(path);
+      if (activePath !== path) return; // selection changed while loading
       if (res && res.ok) {
         renderGroups(res.groups);
         fillForm(res.fields);
@@ -383,13 +434,14 @@
   }
 
   function closeMeta() {
-    const dlg = $("metaDialog");
-    if (dlg && dlg.open) dlg.close();
-    metaPath = null;
+    const panel = $("detailPanel");
+    if (panel) panel.hidden = true;
+    activePath = null;
+    renderCards();
   }
 
   async function saveEdits() {
-    if (!metaPath) return;
+    if (!activePath) return;
     const api = await apiReady();
     if (!api || !api.save_with_edits) return;
     const edits = {
@@ -397,6 +449,7 @@
       copyright: $("fCopyright").value,
       description: $("fDescription").value,
       software: $("fSoftware").value,
+      dateTime: $("fDateTime").value,
       gpsLat: $("fLat").value,
       gpsLon: $("fLon").value,
       clearGps: $("fClearGps").checked,
@@ -404,7 +457,7 @@
     $("metaSave").disabled = true;
     $("metaStatus").textContent = t("loadingMeta");
     try {
-      const res = await api.save_with_edits(metaPath, edits);
+      const res = await api.save_with_edits(activePath, edits);
       if (res && res.ok) {
         $("metaStatus").textContent = fmt("editedOk", { name: res.outName });
         setStatus(fmt("editedOk", { name: res.outName }));
@@ -424,11 +477,21 @@
     }
   }
 
-  async function stripFromDialog() {
-    if (!metaPath) return;
-    const path = metaPath;
-    closeMeta();
-    await stripOne(path);
+  async function stripActive() {
+    if (!activePath) return;
+    await stripOne(activePath);
+    const it = items.get(activePath);
+    if (it && it.cleaned) {
+      $("metaStatus").textContent = it.cleanNote || "";
+      const folderBtn = $("metaFolder");
+      folderBtn.hidden = !it.outPath;
+      if (it.outPath) {
+        folderBtn.onclick = async () => {
+          const a = await apiReady();
+          if (a && a.reveal) { try { await a.reveal(it.outPath); } catch (_) {} }
+        };
+      }
+    }
   }
 
   /* ---------- Dropzone wiring ---------- */
@@ -536,10 +599,8 @@
   $("btnStripAll").addEventListener("click", stripAll);
   $("btnClear").addEventListener("click", clearList);
   if ($("metaSave")) $("metaSave").addEventListener("click", saveEdits);
-  if ($("metaStrip")) $("metaStrip").addEventListener("click", stripFromDialog);
+  if ($("metaStrip")) $("metaStrip").addEventListener("click", stripActive);
   if ($("metaClose")) $("metaClose").addEventListener("click", closeMeta);
-  if ($("metaCloseBtn")) $("metaCloseBtn").addEventListener("click", closeMeta);
-  if ($("metaDialog")) $("metaDialog").addEventListener("cancel", () => { metaPath = null; });
   if ($("btnUpdateNow")) $("btnUpdateNow").addEventListener("click", applyUpdateNow);
   if ($("btnUpdateLater")) $("btnUpdateLater").addEventListener("click", dismissUpdateLater);
 

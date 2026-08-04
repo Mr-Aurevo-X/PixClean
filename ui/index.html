@@ -121,6 +121,74 @@
 
       <div class="cards" id="cards"></div>
 
+      <section class="detail-panel" id="detailPanel" hidden aria-live="polite">
+        <header class="detail-head">
+          <div class="meta-thumb"><img id="metaThumb" alt="" /></div>
+          <div class="meta-head-text">
+            <h3 id="metaName">—</h3>
+            <p class="meta-sub" id="metaFmt"></p>
+          </div>
+          <button type="button" class="icon-btn" id="metaClose" title="Fermer l'aperçu" aria-label="Fermer l'aperçu">×</button>
+        </header>
+
+        <div class="meta-cols">
+          <section class="meta-preview">
+            <h4 data-i18n="previewTitle">Métadonnées présentes</h4>
+            <p class="section-hint" data-i18n="previewHint">Chaque ligne indique le champ, ce qu'il signifie et sa valeur actuelle.</p>
+            <div class="meta-groups" id="metaGroups"></div>
+            <p class="meta-empty" id="metaEmpty" hidden data-i18n="previewEmpty">Aucune métadonnée détectée.</p>
+          </section>
+
+          <section class="meta-edit">
+            <h4 data-i18n="editTitle">Ajouter / éditer les métadonnées</h4>
+            <p class="section-hint" data-i18n="editHint">Renseignez un champ pour l'ajouter, videz-le pour le retirer. L'original n'est jamais modifié.</p>
+            <form class="meta-form" id="metaForm" onsubmit="return false">
+              <label class="fld" data-i18n-title="fArtistHint" title="Personne créditée comme auteur de l'image.">
+                <span data-i18n="fArtist">Auteur / Artiste</span>
+                <input type="text" id="fArtist" autocomplete="off" placeholder="Jean Dupont" />
+              </label>
+              <label class="fld" data-i18n-title="fCopyrightHint" title="Mention de droits d'auteur.">
+                <span data-i18n="fCopyright">Copyright</span>
+                <input type="text" id="fCopyright" autocomplete="off" placeholder="© 2026 Jean Dupont" />
+              </label>
+              <label class="fld" data-i18n-title="fDescriptionHint" title="Légende ou description de l'image.">
+                <span data-i18n="fDescription">Description</span>
+                <input type="text" id="fDescription" autocomplete="off" placeholder="Coucher de soleil à Paris" />
+              </label>
+              <label class="fld" data-i18n-title="fSoftwareHint" title="Appareil ou logiciel ayant produit l'image.">
+                <span data-i18n="fSoftware">Logiciel</span>
+                <input type="text" id="fSoftware" autocomplete="off" placeholder="MetaStrip" />
+              </label>
+              <label class="fld" data-i18n-title="fDateTimeHint" title="Date/heure de prise de vue (format AAAA:MM:JJ HH:MM:SS).">
+                <span data-i18n="fDateTime">Date de prise de vue</span>
+                <input type="text" id="fDateTime" autocomplete="off" placeholder="2026:08:04 21:30:00" />
+              </label>
+              <div class="gps-row">
+                <label class="fld" data-i18n-title="fLatHint" title="Coordonnée nord/sud (−90 à 90).">
+                  <span data-i18n="fLat">GPS latitude</span>
+                  <input type="text" id="fLat" inputmode="decimal" placeholder="48.8566" autocomplete="off" />
+                </label>
+                <label class="fld" data-i18n-title="fLonHint" title="Coordonnée est/ouest (−180 à 180).">
+                  <span data-i18n="fLon">GPS longitude</span>
+                  <input type="text" id="fLon" inputmode="decimal" placeholder="2.3522" autocomplete="off" />
+                </label>
+              </div>
+              <label class="check"><input type="checkbox" id="fClearGps" />
+                <span data-i18n="fClearGps">Supprimer les coordonnées GPS</span></label>
+            </form>
+            <p class="meta-note" data-i18n="editNote">« Enregistrer » crée une copie *_edited (l'original reste intact). « Nettoyer » supprime toutes les métadonnées (*_clean).</p>
+          </section>
+        </div>
+
+        <footer class="meta-actions">
+          <button type="button" class="btn accent" id="metaSave" data-i18n="btnSaveEdits">Enregistrer avec ces métadonnées</button>
+          <button type="button" class="btn" id="metaStrip" data-i18n="btnStripHere">Nettoyer / retirer toutes les métadonnées</button>
+          <span class="toolbar-spacer"></span>
+          <button type="button" class="btn ghost" id="metaFolder" hidden data-i18n="btnFolder">Dossier</button>
+        </footer>
+        <p class="meta-status" id="metaStatus" aria-live="polite"></p>
+      </section>
+
       <p class="disclaimer" id="disclaimer" data-i18n="disclaimer">
         Une copie nettoyée <code>*_clean</code> est enregistrée à côté de l'original
         (les fichiers glissés vont dans Téléchargements). L'original n'est jamais modifié.
@@ -130,59 +198,6 @@
       <p class="status" id="status"></p>
     </div>
   </div>
-
-  <dialog class="meta-dialog" id="metaDialog">
-    <div class="meta-card">
-      <header class="meta-head">
-        <div class="meta-thumb"><img id="metaThumb" alt="" /></div>
-        <div class="meta-head-text">
-          <h3 id="metaName">—</h3>
-          <p class="meta-sub" id="metaFmt"></p>
-        </div>
-        <button type="button" class="icon-btn" id="metaClose" title="Fermer" aria-label="Fermer">×</button>
-      </header>
-
-      <div class="meta-cols">
-        <section class="meta-preview">
-          <h4 data-i18n="previewTitle">Métadonnées actuelles</h4>
-          <div class="meta-groups" id="metaGroups"></div>
-          <p class="meta-empty" id="metaEmpty" hidden data-i18n="previewEmpty">Aucune métadonnée détectée.</p>
-        </section>
-
-        <section class="meta-edit">
-          <h4 data-i18n="editTitle">Éditer / ajouter</h4>
-          <form class="meta-form" id="metaForm" onsubmit="return false">
-            <label class="fld"><span data-i18n="fArtist">Auteur / Artiste</span>
-              <input type="text" id="fArtist" autocomplete="off" /></label>
-            <label class="fld"><span data-i18n="fCopyright">Copyright</span>
-              <input type="text" id="fCopyright" autocomplete="off" /></label>
-            <label class="fld"><span data-i18n="fDescription">Description</span>
-              <input type="text" id="fDescription" autocomplete="off" /></label>
-            <label class="fld"><span data-i18n="fSoftware">Logiciel</span>
-              <input type="text" id="fSoftware" autocomplete="off" /></label>
-            <div class="gps-row">
-              <label class="fld"><span data-i18n="fLat">GPS latitude</span>
-                <input type="text" id="fLat" inputmode="decimal" placeholder="48.8566" autocomplete="off" /></label>
-              <label class="fld"><span data-i18n="fLon">GPS longitude</span>
-                <input type="text" id="fLon" inputmode="decimal" placeholder="2.3522" autocomplete="off" /></label>
-            </div>
-            <label class="check"><input type="checkbox" id="fClearGps" />
-              <span data-i18n="fClearGps">Supprimer les coordonnées GPS</span></label>
-          </form>
-          <p class="meta-note" data-i18n="editNote">« Enregistrer » crée une copie *_edited (l'original reste intact). « Nettoyer » supprime toutes les métadonnées (*_clean).</p>
-        </section>
-      </div>
-
-      <footer class="meta-actions">
-        <button type="button" class="btn accent" id="metaSave" data-i18n="btnSaveEdits">Enregistrer les modifications</button>
-        <button type="button" class="btn" id="metaStrip" data-i18n="btnStripHere">Nettoyer tout</button>
-        <span class="toolbar-spacer"></span>
-        <button type="button" class="btn ghost" id="metaFolder" hidden data-i18n="btnFolder">Dossier</button>
-        <button type="button" class="btn ghost" id="metaCloseBtn" data-i18n="btnClose">Fermer</button>
-      </footer>
-      <p class="meta-status" id="metaStatus" aria-live="polite"></p>
-    </div>
-  </dialog>
 
   <dialog class="about-dialog" id="aboutDialog">
     <form method="dialog" class="about-card">

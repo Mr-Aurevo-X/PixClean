@@ -22,15 +22,19 @@ _Download `MetaStrip.exe`, double-click, done. No install._
   _Drag & drop JPEG · PNG · WebP images (or "Add" button)._
 - **Détection** : présence de métadonnées **EXIF**, **GPS**, **XMP**, commentaires.
   _Detects EXIF / GPS / XMP / comment metadata._
-- **Aperçu** : cliquez « Aperçu / Éditer » pour voir **toutes** les métadonnées
-  (EXIF détaillé, GPS décodé en lat/lon, XMP, commentaires) **avant** nettoyage.
-  _Preview: click "Preview / Edit" to see all metadata (detailed EXIF, GPS decoded to
-  lat/lon, XMP, comments) before cleaning._
-- **Édition / ajout** : modifiez **Auteur**, **Copyright**, **Description**,
-  **Logiciel** et les **coordonnées GPS** (définir ou effacer), puis
-  **Enregistrer les modifications** → copie `nom_edited.ext` (sans stripping).
-  _Edit / add: change Author, Copyright, Description, Software and GPS coordinates
-  (set or clear), then Save changes → `name_edited.ext` copy (no stripping)._
+- **Panneau « Métadonnées présentes »** : dès qu'une image est sélectionnée, un
+  panneau liste **chaque champ** avec son **nom en clair**, une **courte
+  explication** (« GPS = localisation », « Artist = auteur »…) et sa **valeur
+  actuelle**. État vide explicite : « Aucune métadonnée détectée ».
+  _"Metadata present" panel: on selection, lists every field with a plain-language
+  name, a short explanation and its current value; explicit empty state._
+- **Ajout / édition** : formulaire toujours visible pour **ajouter ou modifier**
+  **Auteur**, **Copyright**, **Description**, **Logiciel**, **Date de prise de vue**
+  et les **coordonnées GPS** — même sur une image sans métadonnées. Puis
+  **Enregistrer avec ces métadonnées** → copie `nom_edited.ext` (sans stripping).
+  _Add / edit: always-visible form to add or change Author, Copyright, Description,
+  Software, Capture date and GPS coordinates — even on a bare image. Save with this
+  metadata → `name_edited.ext` copy (no stripping)._
 - **Nettoyage** : supprime toutes les métadonnées et enregistre une copie
   `nom_clean.ext`. **L'original n'est jamais modifié.**
   _Strips all metadata and saves a `name_clean.ext` copy. The original is never touched._

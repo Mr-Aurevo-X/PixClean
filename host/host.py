@@ -44,8 +44,13 @@ EXIF_IFD = 0x8769
 # Editable EXIF tags (base IFD).
 TAG_IMAGE_DESCRIPTION = 0x010E
 TAG_SOFTWARE = 0x0131
+TAG_DATETIME = 0x0132
 TAG_ARTIST = 0x013B
 TAG_COPYRIGHT = 0x8298
+
+# EXIF sub-IFD capture date (read-only fallback for the editable "date").
+EXIF_DATETIME_ORIGINAL = 0x9003
+EXIF_DATETIME_DIGITIZED = 0x9004
 
 # GPS sub-tags.
 GPS_VERSION_ID = 0
@@ -66,6 +71,93 @@ PNG_TEXT_KEYS = {
 
 SUPPORTED_EXT = {".jpg", ".jpeg", ".png", ".webp"}
 FILE_TYPES = ("Images (*.jpg;*.jpeg;*.png;*.webp)", "Tous les fichiers (*.*)")
+
+# Short French description shown under each metadata group heading.
+GROUP_INFO = {
+    "EXIF": "Informations techniques inscrites par l'appareil ou le logiciel.",
+    "GPS": "Localisation géographique de la prise de vue.",
+    "XMP": "Métadonnées étendues (Adobe / IPTC) : titre, mots-clés, droits…",
+    "Texte / commentaires": "Champs texte libres intégrés dans le fichier.",
+    "ICC": "Profil colorimétrique intégré à l'image.",
+}
+
+# Per-tag French label + one-line explanation. Keyed by the Pillow tag name.
+TAG_INFO: dict[str, tuple[str, str]] = {
+    # Base / identity
+    "Artist": ("Auteur / Artiste", "Personne créditée comme auteur de l'image."),
+    "Copyright": ("Copyright", "Mention de droits d'auteur sur l'image."),
+    "ImageDescription": ("Description", "Légende ou description de l'image."),
+    "Software": ("Logiciel", "Appareil ou logiciel ayant produit / édité l'image."),
+    "DateTime": ("Date de modification", "Date/heure de dernière modification du fichier."),
+    "DateTimeOriginal": ("Date de prise de vue", "Date/heure à laquelle la photo a été prise."),
+    "DateTimeDigitized": ("Date de numérisation", "Date/heure de numérisation de l'image."),
+    "Make": ("Marque de l'appareil", "Fabricant de l'appareil photo."),
+    "Model": ("Modèle de l'appareil", "Modèle de l'appareil photo."),
+    "LensModel": ("Objectif", "Modèle de l'objectif utilisé."),
+    "HostComputer": ("Ordinateur", "Machine ayant traité l'image."),
+    "Orientation": ("Orientation", "Sens dans lequel l'image doit être affichée."),
+    # Capture settings
+    "ExposureTime": ("Temps d'exposition", "Durée d'ouverture de l'obturateur."),
+    "FNumber": ("Ouverture (f/)", "Ouverture du diaphragme."),
+    "ISOSpeedRatings": ("Sensibilité ISO", "Sensibilité du capteur."),
+    "PhotographicSensitivity": ("Sensibilité ISO", "Sensibilité du capteur."),
+    "FocalLength": ("Distance focale", "Focale de l'objectif (en mm)."),
+    "FocalLengthIn35mmFilm": ("Focale équiv. 35 mm", "Focale ramenée au format 35 mm."),
+    "Flash": ("Flash", "État du flash lors de la prise de vue."),
+    "ExposureProgram": ("Programme d'exposition", "Mode d'exposition de l'appareil."),
+    "MeteringMode": ("Mesure de lumière", "Méthode de mesure de la lumière."),
+    "WhiteBalance": ("Balance des blancs", "Réglage de la balance des blancs."),
+    "ExposureBiasValue": ("Correction d'expo.", "Correction d'exposition appliquée."),
+    # Rendering / resolution
+    "XResolution": ("Résolution X", "Densité de points horizontale."),
+    "YResolution": ("Résolution Y", "Densité de points verticale."),
+    "ResolutionUnit": ("Unité de résolution", "Unité des résolutions (pouce/cm)."),
+    "ColorSpace": ("Espace colorimétrique", "Espace de couleurs de l'image."),
+    "ExifImageWidth": ("Largeur (EXIF)", "Largeur en pixels notée dans l'EXIF."),
+    "ExifImageHeight": ("Hauteur (EXIF)", "Hauteur en pixels notée dans l'EXIF."),
+    "ExifOffset": ("Bloc EXIF", "Pointeur interne vers les données EXIF."),
+    "YCbCrPositioning": ("Positionnement YCbCr", "Détail technique d'encodage des couleurs."),
+    # GPS
+    "Latitude": ("Latitude", "Coordonnée nord/sud de la prise de vue."),
+    "Longitude": ("Longitude", "Coordonnée est/ouest de la prise de vue."),
+    "Altitude": ("Altitude", "Altitude de la prise de vue."),
+    "GPSVersionID": ("Version GPS", "Version du format des données GPS."),
+    "GPSLatitudeRef": ("Réf. latitude", "Hémisphère nord (N) ou sud (S)."),
+    "GPSLongitudeRef": ("Réf. longitude", "Est (E) ou ouest (W)."),
+    "GPSAltitudeRef": ("Réf. altitude", "Référence d'altitude (niveau de la mer)."),
+    "GPSTimeStamp": ("Heure GPS (UTC)", "Heure UTC fournie par le GPS."),
+    "GPSDateStamp": ("Date GPS (UTC)", "Date UTC fournie par le GPS."),
+    "GPSProcessingMethod": ("Méthode GPS", "Méthode de localisation utilisée."),
+    # Blocks
+    "XMP": ("XMP", "Métadonnées étendues (droits, mots-clés, titre…)."),
+    "icc_profile": ("Profil ICC", "Profil de couleurs intégré à l'image."),
+}
+
+# Group-aware fallback explanation when a tag is not in TAG_INFO.
+_GROUP_FALLBACK = {
+    "EXIF": "Donnée technique EXIF de l'appareil / du logiciel.",
+    "GPS": "Donnée de localisation GPS.",
+    "XMP": "Métadonnée étendue XMP.",
+    "Texte / commentaires": "Champ texte intégré dans le fichier.",
+    "ICC": "Information de profil colorimétrique.",
+}
+
+
+def _label_hint(key: str, group: str) -> tuple[str, str]:
+    """Return (FR label, short FR explanation) for a metadata key."""
+    info = TAG_INFO.get(key)
+    if info:
+        return info
+    return key, _GROUP_FALLBACK.get(group, "Métadonnée intégrée au fichier.")
+
+
+def _enrich(entries: list[dict[str, str]], group: str) -> list[dict[str, str]]:
+    """Add FR `label` + `hint` to each {key, value} entry."""
+    for entry in entries:
+        label, hint = _label_hint(entry.get("key", ""), group)
+        entry["label"] = label
+        entry["hint"] = hint
+    return entries
 
 
 def _local_appdata() -> Path:
@@ -436,7 +528,11 @@ def _read_metadata(path: Path) -> dict[str, Any]:
                 if val:
                     exif_entries.append({"key": name, "value": val})
         if exif_entries:
-            groups.append({"title": "EXIF", "entries": exif_entries[:60]})
+            groups.append({
+                "title": "EXIF",
+                "desc": GROUP_INFO["EXIF"],
+                "entries": _enrich(exif_entries[:60], "EXIF"),
+            })
 
         # --- GPS ------------------------------------------------------
         gps_lat = ""
@@ -467,16 +563,22 @@ def _read_metadata(path: Path) -> dict[str, Any]:
                 if val:
                     gps_entries.append({"key": name, "value": val})
         if gps_entries:
-            groups.append({"title": "GPS", "entries": gps_entries})
+            groups.append({
+                "title": "GPS",
+                "desc": GROUP_INFO["GPS"],
+                "entries": _enrich(gps_entries, "GPS"),
+            })
 
         # --- XMP ------------------------------------------------------
         xmp_raw = info.get("xmp") or info.get("XML:com.adobe.xmp")
         if xmp_raw:
             if isinstance(xmp_raw, bytes):
                 xmp_raw = xmp_raw.decode("utf-8", "replace")
-            groups.append(
-                {"title": "XMP", "entries": [{"key": "XMP", "value": _fmt_value(xmp_raw, 400)}]}
-            )
+            groups.append({
+                "title": "XMP",
+                "desc": GROUP_INFO["XMP"],
+                "entries": _enrich([{"key": "XMP", "value": _fmt_value(xmp_raw, 400)}], "XMP"),
+            })
 
         # --- Text / info chunks (PNG comments, etc.) ------------------
         _harmless = {
@@ -496,14 +598,39 @@ def _read_metadata(path: Path) -> dict[str, Any]:
                 if val:
                     text_entries.append({"key": str(key), "value": val})
         if text_entries:
-            groups.append({"title": "Texte / commentaires", "entries": text_entries})
+            groups.append({
+                "title": "Texte / commentaires",
+                "desc": GROUP_INFO["Texte / commentaires"],
+                "entries": _enrich(text_entries, "Texte / commentaires"),
+            })
 
         if info.get("icc_profile"):
-            groups.append(
-                {"title": "ICC", "entries": [{"key": "icc_profile", "value": "présent"}]}
-            )
+            groups.append({
+                "title": "ICC",
+                "desc": GROUP_INFO["ICC"],
+                "entries": _enrich(
+                    [{"key": "icc_profile", "value": "présent"}], "ICC"
+                ),
+            })
 
         # --- Editable fields (EXIF first, PNG text as fallback) -------
+        date_time = _exif_text(exif, TAG_DATETIME)
+        if not date_time and exif is not None:
+            try:
+                sub = exif.get_ifd(EXIF_IFD)
+            except Exception:  # noqa: BLE001
+                sub = {}
+            for dt_tag in (EXIF_DATETIME_ORIGINAL, EXIF_DATETIME_DIGITIZED):
+                raw = (sub or {}).get(dt_tag)
+                if raw:
+                    if isinstance(raw, bytes):
+                        raw = raw.decode("utf-8", "replace")
+                    date_time = str(raw).replace("\x00", "").strip()
+                    if date_time:
+                        break
+        if not date_time:
+            date_time = _info_text(info, ("Creation Time", "date:create", "DateTime"))
+
         fields = {
             "artist": _exif_text(exif, TAG_ARTIST) or _info_text(info, PNG_TEXT_KEYS["artist"]),
             "copyright": _exif_text(exif, TAG_COPYRIGHT)
@@ -512,6 +639,7 @@ def _read_metadata(path: Path) -> dict[str, Any]:
             or _info_text(info, PNG_TEXT_KEYS["description"]),
             "software": _exif_text(exif, TAG_SOFTWARE)
             or _info_text(info, PNG_TEXT_KEYS["software"]),
+            "dateTime": date_time,
             "gpsLat": gps_lat,
             "gpsLon": gps_lon,
         }
@@ -537,6 +665,7 @@ def _apply_edits_path(
     copyright_ = str(edits.get("copyright") or "").strip()
     description = str(edits.get("description") or "").strip()
     software = str(edits.get("software") or "").strip()
+    date_time = str(edits.get("dateTime") or "").strip()
     lat_s = str(edits.get("gpsLat") or "").strip().replace(",", ".")
     lon_s = str(edits.get("gpsLon") or "").strip().replace(",", ".")
     clear_gps = bool(edits.get("clearGps"))
@@ -560,6 +689,7 @@ def _apply_edits_path(
         _set_or_clear(TAG_COPYRIGHT, copyright_)
         _set_or_clear(TAG_IMAGE_DESCRIPTION, description)
         _set_or_clear(TAG_SOFTWARE, software)
+        _set_or_clear(TAG_DATETIME, date_time)
 
         set_gps = (not clear_gps) and bool(lat_s) and bool(lon_s)
         lat = lon = 0.0
@@ -607,6 +737,7 @@ def _apply_edits_path(
             edited_keys = {
                 k.lower() for group in PNG_TEXT_KEYS.values() for k in group
             }
+            edited_keys.add("creation time")
             for key, raw in (im.info or {}).items():
                 if not isinstance(raw, str) or not isinstance(key, str):
                     continue
@@ -623,6 +754,8 @@ def _apply_edits_path(
                 meta.add_text("Description", description)
             if software:
                 meta.add_text("Software", software)
+            if date_time:
+                meta.add_text("Creation Time", date_time)
             save_kwargs = {"optimize": True, "pnginfo": meta}
             # eXIf chunk carries GPS / structured fields for PNG.
             if len(exif):
