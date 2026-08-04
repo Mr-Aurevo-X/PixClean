@@ -20,6 +20,8 @@ from pathlib import Path
 from typing import Any
 
 from PIL import Image, ImageOps
+from PIL.ExifTags import GPSTAGS, TAGS
+from PIL.PngImagePlugin import PngInfo
 
 import webview
 
@@ -36,6 +38,31 @@ ENV_LANG = "MRAUREVOX_LANG"
 
 # EXIF IFD tag for GPS block.
 GPS_IFD = 0x8825
+# EXIF sub-IFD pointer (camera / capture settings).
+EXIF_IFD = 0x8769
+
+# Editable EXIF tags (base IFD).
+TAG_IMAGE_DESCRIPTION = 0x010E
+TAG_SOFTWARE = 0x0131
+TAG_ARTIST = 0x013B
+TAG_COPYRIGHT = 0x8298
+
+# GPS sub-tags.
+GPS_VERSION_ID = 0
+GPS_LAT_REF = 1
+GPS_LAT = 2
+GPS_LON_REF = 3
+GPS_LON = 4
+GPS_ALT_REF = 5
+GPS_ALT = 6
+
+# PNG text keys we treat as the editable equivalents of the EXIF fields.
+PNG_TEXT_KEYS = {
+    "artist": ("Artist", "Author"),
+    "copyright": ("Copyright",),
+    "description": ("Description", "Comment"),
+    "software": ("Software",),
+}
 
 SUPPORTED_EXT = {".jpg", ".jpeg", ".png", ".webp"}
 FILE_TYPES = ("Images (*.jpg;*.jpeg;*.png;*.webp)", "Tous les fichiers (*.*)")
@@ -290,6 +317,338 @@ def _strip_path(path: Path, out_dir: Path | None = None) -> dict[str, Any]:
     }
 
 
+def _unique_suffix(path: Path, suffix: str) -> Path:
+    """`photo.jpg` -> `photo{suffix}.jpg`, avoiding overwrite of any file."""
+    base = path.with_name(f"{path.stem}{suffix}{path.suffix}")
+    if not base.exists():
+        return base
+    i = 2
+    while True:
+        cand = path.with_name(f"{path.stem}{suffix}_{i}{path.suffix}")
+        if not cand.exists():
+            return cand
+        i += 1
+
+
+def _rational(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        try:
+            num, den = value  # type: ignore[misc]
+            return float(num) / float(den) if den else 0.0
+        except Exception:  # noqa: BLE001
+            return 0.0
+
+
+def _dms_to_deg(dms: Any, ref: Any) -> float | None:
+    try:
+        deg = _rational(dms[0]) + _rational(dms[1]) / 60 + _rational(dms[2]) / 3600
+    except Exception:  # noqa: BLE001
+        return None
+    if str(ref).strip().upper() in ("S", "W"):
+        deg = -deg
+    return round(deg, 6)
+
+
+def _deg_to_dms(value: float) -> tuple[float, float, float]:
+    value = abs(float(value))
+    deg = int(value)
+    minutes_full = (value - deg) * 60
+    minutes = int(minutes_full)
+    seconds = round((minutes_full - minutes) * 60, 4)
+    return (float(deg), float(minutes), float(seconds))
+
+
+def _fmt_value(value: Any, limit: int = 160) -> str:
+    if isinstance(value, bytes):
+        try:
+            text = value.decode("utf-8", "replace").replace("\x00", "").strip()
+        except Exception:  # noqa: BLE001
+            text = ""
+        if text and all(ch.isprintable() or ch.isspace() for ch in text):
+            out = text
+        else:
+            out = value.hex()
+    elif isinstance(value, (tuple, list)):
+        out = ", ".join(_fmt_value(v, limit) for v in value)
+    else:
+        out = str(value).replace("\x00", "").strip()
+    out = " ".join(out.split())
+    if len(out) > limit:
+        out = out[: limit - 1] + "…"
+    return out
+
+
+def _exif_text(exif, tag: int) -> str:
+    try:
+        value = exif.get(tag)
+    except Exception:  # noqa: BLE001
+        value = None
+    if value in (None, ""):
+        return ""
+    if isinstance(value, bytes):
+        value = value.decode("utf-8", "replace")
+    return str(value).replace("\x00", "").strip()
+
+
+def _info_text(info: dict, keys: tuple[str, ...]) -> str:
+    lowered = {str(k).lower(): v for k, v in (info or {}).items()}
+    for key in keys:
+        val = lowered.get(key.lower())
+        if isinstance(val, bytes):
+            val = val.decode("utf-8", "replace")
+        if isinstance(val, str) and val.strip():
+            return val.replace("\x00", "").strip()
+    return ""
+
+
+def _read_metadata(path: Path) -> dict[str, Any]:
+    """Read metadata for the preview panel + the editable form fields."""
+    with Image.open(path) as im:
+        im.load()
+        fmt = im.format or _fmt_for_ext(path.suffix)
+        info = im.info or {}
+        try:
+            exif = im.getexif()
+        except Exception:  # noqa: BLE001
+            exif = None
+
+        groups: list[dict[str, Any]] = []
+
+        # --- Base EXIF tags -------------------------------------------
+        exif_entries: list[dict[str, str]] = []
+        if exif is not None:
+            for tag_id, raw in exif.items():
+                if tag_id in (GPS_IFD, EXIF_IFD):
+                    continue
+                name = TAGS.get(tag_id, f"0x{tag_id:04X}")
+                val = _fmt_value(raw)
+                if val:
+                    exif_entries.append({"key": name, "value": val})
+            try:
+                sub = exif.get_ifd(EXIF_IFD)
+            except Exception:  # noqa: BLE001
+                sub = {}
+            for tag_id, raw in (sub or {}).items():
+                name = TAGS.get(tag_id, f"0x{tag_id:04X}")
+                val = _fmt_value(raw)
+                if val:
+                    exif_entries.append({"key": name, "value": val})
+        if exif_entries:
+            groups.append({"title": "EXIF", "entries": exif_entries[:60]})
+
+        # --- GPS ------------------------------------------------------
+        gps_lat = ""
+        gps_lon = ""
+        gps_entries: list[dict[str, str]] = []
+        try:
+            gps = exif.get_ifd(GPS_IFD) if exif is not None else {}
+        except Exception:  # noqa: BLE001
+            gps = {}
+        if gps:
+            lat = _dms_to_deg(gps.get(GPS_LAT), gps.get(GPS_LAT_REF, "N"))
+            lon = _dms_to_deg(gps.get(GPS_LON), gps.get(GPS_LON_REF, "E"))
+            if lat is not None and gps.get(GPS_LAT) is not None:
+                gps_lat = f"{lat:.6f}"
+                gps_entries.append({"key": "Latitude", "value": gps_lat})
+            if lon is not None and gps.get(GPS_LON) is not None:
+                gps_lon = f"{lon:.6f}"
+                gps_entries.append({"key": "Longitude", "value": gps_lon})
+            if GPS_ALT in gps:
+                gps_entries.append(
+                    {"key": "Altitude", "value": f"{_rational(gps.get(GPS_ALT)):.1f} m"}
+                )
+            for tag_id, raw in gps.items():
+                if tag_id in (GPS_LAT, GPS_LON, GPS_ALT):
+                    continue
+                name = GPSTAGS.get(tag_id, f"GPS 0x{tag_id:04X}")
+                val = _fmt_value(raw)
+                if val:
+                    gps_entries.append({"key": name, "value": val})
+        if gps_entries:
+            groups.append({"title": "GPS", "entries": gps_entries})
+
+        # --- XMP ------------------------------------------------------
+        xmp_raw = info.get("xmp") or info.get("XML:com.adobe.xmp")
+        if xmp_raw:
+            if isinstance(xmp_raw, bytes):
+                xmp_raw = xmp_raw.decode("utf-8", "replace")
+            groups.append(
+                {"title": "XMP", "entries": [{"key": "XMP", "value": _fmt_value(xmp_raw, 400)}]}
+            )
+
+        # --- Text / info chunks (PNG comments, etc.) ------------------
+        _harmless = {
+            "exif", "xmp", "XML:com.adobe.xmp", "icc_profile",
+            "dpi", "transparency", "background", "gamma", "srgb",
+            "aspect", "pixel_aspect", "chromaticity",
+            "jfif", "jfif_version", "jfif_unit", "jfif_density",
+            "progression", "progressive", "adobe", "adobe_transform",
+            "bits", "compression", "loop", "duration", "version",
+        }
+        text_entries: list[dict[str, str]] = []
+        for key, raw in (info or {}).items():
+            if key in _harmless:
+                continue
+            if isinstance(raw, (bytes, str)):
+                val = _fmt_value(raw)
+                if val:
+                    text_entries.append({"key": str(key), "value": val})
+        if text_entries:
+            groups.append({"title": "Texte / commentaires", "entries": text_entries})
+
+        if info.get("icc_profile"):
+            groups.append(
+                {"title": "ICC", "entries": [{"key": "icc_profile", "value": "présent"}]}
+            )
+
+        # --- Editable fields (EXIF first, PNG text as fallback) -------
+        fields = {
+            "artist": _exif_text(exif, TAG_ARTIST) or _info_text(info, PNG_TEXT_KEYS["artist"]),
+            "copyright": _exif_text(exif, TAG_COPYRIGHT)
+            or _info_text(info, PNG_TEXT_KEYS["copyright"]),
+            "description": _exif_text(exif, TAG_IMAGE_DESCRIPTION)
+            or _info_text(info, PNG_TEXT_KEYS["description"]),
+            "software": _exif_text(exif, TAG_SOFTWARE)
+            or _info_text(info, PNG_TEXT_KEYS["software"]),
+            "gpsLat": gps_lat,
+            "gpsLon": gps_lon,
+        }
+
+    return {
+        "ok": True,
+        "path": str(path),
+        "name": path.name,
+        "format": (fmt or "").upper(),
+        "groups": groups,
+        "fields": fields,
+        "hasGps": bool(gps_lat or gps_lon),
+        "hasAny": bool(groups),
+    }
+
+
+def _apply_edits_path(
+    path: Path, edits: dict[str, Any], out_dir: Path | None = None
+) -> dict[str, Any]:
+    """Write edited/added metadata into a `*_edited` copy (no stripping)."""
+    edits = edits or {}
+    artist = str(edits.get("artist") or "").strip()
+    copyright_ = str(edits.get("copyright") or "").strip()
+    description = str(edits.get("description") or "").strip()
+    software = str(edits.get("software") or "").strip()
+    lat_s = str(edits.get("gpsLat") or "").strip().replace(",", ".")
+    lon_s = str(edits.get("gpsLon") or "").strip().replace(",", ".")
+    clear_gps = bool(edits.get("clearGps"))
+
+    with Image.open(path) as im:
+        im.load()
+        fmt = (im.format or _fmt_for_ext(path.suffix) or "").upper()
+
+        try:
+            exif = im.getexif()
+        except Exception:  # noqa: BLE001
+            exif = Image.Exif()
+
+        def _set_or_clear(tag: int, value: str) -> None:
+            if value:
+                exif[tag] = value
+            elif tag in exif:
+                del exif[tag]
+
+        _set_or_clear(TAG_ARTIST, artist)
+        _set_or_clear(TAG_COPYRIGHT, copyright_)
+        _set_or_clear(TAG_IMAGE_DESCRIPTION, description)
+        _set_or_clear(TAG_SOFTWARE, software)
+
+        set_gps = (not clear_gps) and bool(lat_s) and bool(lon_s)
+        lat = lon = 0.0
+        if set_gps:
+            try:
+                lat = float(lat_s)
+                lon = float(lon_s)
+                set_gps = -90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0
+            except ValueError:
+                set_gps = False
+
+        if set_gps:
+            exif[GPS_IFD] = {
+                GPS_VERSION_ID: b"\x02\x03\x00\x00",
+                GPS_LAT_REF: "N" if lat >= 0 else "S",
+                GPS_LAT: _deg_to_dms(lat),
+                GPS_LON_REF: "E" if lon >= 0 else "W",
+                GPS_LON: _deg_to_dms(lon),
+            }
+        else:
+            try:
+                existing = exif.get_ifd(GPS_IFD)
+                if existing:
+                    existing.clear()
+            except Exception:  # noqa: BLE001
+                pass
+            if GPS_IFD in exif:
+                del exif[GPS_IFD]
+
+        target_dir = out_dir if out_dir else path.parent
+        target_dir.mkdir(parents=True, exist_ok=True)
+        out = _unique_suffix(target_dir / path.name, "_edited")
+
+        save_kwargs: dict[str, Any] = {}
+        if fmt == "JPEG":
+            image = im if im.mode in ("RGB", "L", "CMYK") else im.convert("RGB")
+            save_kwargs = {"quality": 95, "optimize": True, "exif": exif}
+            image.save(out, format="JPEG", **save_kwargs)
+        elif fmt == "WEBP":
+            save_kwargs = {"quality": 95, "method": 6, "exif": exif}
+            im.save(out, format="WEBP", **save_kwargs)
+        elif fmt == "PNG":
+            meta = PngInfo()
+            # Preserve any pre-existing textual chunks we are not editing.
+            edited_keys = {
+                k.lower() for group in PNG_TEXT_KEYS.values() for k in group
+            }
+            for key, raw in (im.info or {}).items():
+                if not isinstance(raw, str) or not isinstance(key, str):
+                    continue
+                if key.lower() in edited_keys or key in (
+                    "exif", "xmp", "icc_profile", "srgb", "gamma", "dpi",
+                ):
+                    continue
+                meta.add_text(key, raw)
+            if artist:
+                meta.add_text("Artist", artist)
+            if copyright_:
+                meta.add_text("Copyright", copyright_)
+            if description:
+                meta.add_text("Description", description)
+            if software:
+                meta.add_text("Software", software)
+            save_kwargs = {"optimize": True, "pnginfo": meta}
+            # eXIf chunk carries GPS / structured fields for PNG.
+            if len(exif):
+                save_kwargs["exif"] = exif
+            im.save(out, format="PNG", **save_kwargs)
+        else:
+            im.save(out, format=fmt or None)
+
+    try:
+        out_bytes = out.stat().st_size
+    except OSError:
+        out_bytes = 0
+
+    return {
+        "ok": True,
+        "source": str(path),
+        "outPath": str(out),
+        "outName": out.name,
+        "outDir": str(out.parent),
+        "sizeBytes": out_bytes,
+        "sizeText": _human_size(out_bytes),
+        "gpsSet": set_gps,
+        "gpsCleared": clear_gps or (not set_gps),
+    }
+
+
 class Api(WindowChromeMixin):
     """JS bridge — © 2026 Mr-Aurevo-X · MetaStrip · all rights reserved."""
 
@@ -390,6 +749,28 @@ class Api(WindowChromeMixin):
             return {"ok": True, "item": item}
         except Exception as exc:  # noqa: BLE001
             return {"ok": False, "error": str(exc), "name": name}
+
+    def read_metadata(self, path: str | None = None) -> dict:
+        """Read the full, human-readable metadata for one image (preview)."""
+        try:
+            src = Path(path or "")
+            if not src.is_file():
+                return {"ok": False, "error": "not_found", "path": path}
+            return _read_metadata(src)
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "error": str(exc), "path": path}
+
+    def save_with_edits(self, path: str | None = None,
+                        edits: dict | None = None) -> dict:
+        """Write edited/added metadata into a *_edited copy (no stripping)."""
+        src = Path(path or "")
+        if not src.is_file():
+            return {"ok": False, "source": path, "error": "not_found"}
+        out_dir = _downloads_dir() if str(src) in self._temp_files else None
+        try:
+            return _apply_edits_path(src, edits or {}, out_dir=out_dir)
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "source": path, "error": str(exc)}
 
     def strip(self, paths: list[str] | None = None) -> dict:
         """Strip metadata from each path, writing *_clean copies."""

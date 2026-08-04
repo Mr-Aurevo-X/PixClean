@@ -83,6 +83,55 @@
 .about-card ul { margin: 0; padding-left: 1.1em; color: var(--muted); font-size: 0.85rem; }
 .about-note { font-size: 0.78rem; color: var(--muted); }
 
+/* Metadata preview / edit dialog */
+.meta-dialog { border: none; padding: 0; background: transparent; max-width: 860px; width: calc(100vw - 48px); }
+.meta-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+.meta-card {
+  background: var(--bg1); color: var(--text); border: 1px solid var(--border);
+  border-radius: 16px; padding: 18px; display: grid; gap: 14px;
+  max-height: calc(100vh - 60px);
+}
+.meta-head { display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; }
+.meta-thumb {
+  width: 56px; height: 56px; border-radius: 10px; overflow: hidden;
+  background: rgba(0, 0, 0, 0.35); display: flex; align-items: center; justify-content: center;
+}
+.meta-thumb img { max-width: 100%; max-height: 100%; display: block; }
+.meta-head-text { min-width: 0; }
+.meta-head-text h3 { margin: 0; font-size: 1.02rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta-sub { margin: 2px 0 0; font-size: 0.76rem; color: var(--muted); font-family: var(--mono); }
+
+.meta-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; min-height: 0; }
+@media (max-width: 720px) { .meta-cols { grid-template-columns: 1fr; } }
+.meta-preview, .meta-edit { min-width: 0; display: grid; gap: 8px; align-content: start; }
+.meta-preview h4, .meta-edit h4 {
+  margin: 0; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);
+}
+.meta-groups { display: grid; gap: 10px; overflow: auto; max-height: 48vh; padding-right: 4px; }
+.meta-group-title {
+  font-size: 0.72rem; font-weight: 700; color: var(--accent);
+  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px;
+}
+.meta-kv { display: grid; grid-template-columns: minmax(90px, 34%) 1fr; gap: 4px 10px; font-size: 0.76rem; }
+.meta-kv dt { color: var(--muted); font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; }
+.meta-kv dd { margin: 0; color: var(--text); word-break: break-word; }
+.meta-empty { font-size: 0.8rem; color: var(--muted); font-style: italic; }
+
+.meta-form { display: grid; gap: 8px; }
+.fld { display: grid; gap: 3px; font-size: 0.74rem; color: var(--muted); }
+.fld input {
+  background: var(--panel2, rgba(255,255,255,0.04)); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px;
+  font-size: 0.84rem; font-family: inherit; width: 100%;
+}
+.fld input:focus-visible { outline: none; border-color: var(--accent); }
+.gps-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.check { display: flex; align-items: center; gap: 7px; font-size: 0.76rem; color: var(--muted); cursor: pointer; }
+.check input { width: 15px; height: 15px; accent-color: var(--accent); }
+.meta-note { font-size: 0.72rem; color: var(--muted); line-height: 1.45; margin: 2px 0 0; }
+.meta-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.meta-status { margin: 0; font-size: 0.82rem; color: var(--accent); min-height: 1.1em; }
+
 /* Native <select> popup: WebView2/Edge composites a translucent select
    background to white, leaving light option text unreadable. Force opaque,
    theme-aware colors on the option list. */

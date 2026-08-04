@@ -22,6 +22,15 @@ _Download `MetaStrip.exe`, double-click, done. No install._
   _Drag & drop JPEG · PNG · WebP images (or "Add" button)._
 - **Détection** : présence de métadonnées **EXIF**, **GPS**, **XMP**, commentaires.
   _Detects EXIF / GPS / XMP / comment metadata._
+- **Aperçu** : cliquez « Aperçu / Éditer » pour voir **toutes** les métadonnées
+  (EXIF détaillé, GPS décodé en lat/lon, XMP, commentaires) **avant** nettoyage.
+  _Preview: click "Preview / Edit" to see all metadata (detailed EXIF, GPS decoded to
+  lat/lon, XMP, comments) before cleaning._
+- **Édition / ajout** : modifiez **Auteur**, **Copyright**, **Description**,
+  **Logiciel** et les **coordonnées GPS** (définir ou effacer), puis
+  **Enregistrer les modifications** → copie `nom_edited.ext` (sans stripping).
+  _Edit / add: change Author, Copyright, Description, Software and GPS coordinates
+  (set or clear), then Save changes → `name_edited.ext` copy (no stripping)._
 - **Nettoyage** : supprime toutes les métadonnées et enregistre une copie
   `nom_clean.ext`. **L'original n'est jamais modifié.**
   _Strips all metadata and saves a `name_clean.ext` copy. The original is never touched._

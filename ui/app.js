@@ -14,13 +14,13 @@
       title: "MetaStrip",
       subtitle: "Supprimez EXIF, GPS et métadonnées — 100 % local",
       featuresTitle: "Fonctions",
-      features: "Glissez des images (JPEG/PNG/WebP), voyez la présence EXIF/GPS, supprimez les métadonnées. Une copie _clean est créée — l'original reste intact.",
+      features: "Glissez des images (JPEG/PNG/WebP), affichez les métadonnées EXIF/GPS/XMP, éditez-les (auteur, copyright, GPS…) ou supprimez tout. Copie _edited ou _clean — l'original reste intact.",
       badgeFree: "100 % gratuit",
       legalFree: "100 % gratuit",
       legalLocal: "100 % local — aucun cloud, aucune télémétrie",
       legalUpdates: "Mise à jour non garantie — vérif. optionnelle GitHub",
       aboutTitle: "À propos — MetaStrip",
-      aboutBody: "Nettoyeur de métadonnées d'images Mr-Aurevo-X. 100 % gratuit, 100 % local (Pillow). Supprime EXIF, GPS, XMP et commentaires. Mise à jour non garantie.",
+      aboutBody: "Nettoyeur et éditeur de métadonnées d'images Mr-Aurevo-X. 100 % gratuit, 100 % local (Pillow). Affiche, édite (auteur, copyright, GPS…) ou supprime EXIF, GPS, XMP et commentaires. Mise à jour non garantie.",
       aboutRights: "Redistribution, reverse engineering ou suppression du copyright interdits sans accord écrit.",
       btnAbout: "À propos",
       btnClose: "Fermer",
@@ -39,6 +39,23 @@
       btnClear: "Vider la liste",
       btnClean: "Nettoyer",
       btnFolder: "Dossier",
+      btnDetail: "Aperçu / Éditer",
+      previewTitle: "Métadonnées actuelles",
+      previewEmpty: "Aucune métadonnée détectée.",
+      editTitle: "Éditer / ajouter",
+      fArtist: "Auteur / Artiste",
+      fCopyright: "Copyright",
+      fDescription: "Description",
+      fSoftware: "Logiciel",
+      fLat: "GPS latitude",
+      fLon: "GPS longitude",
+      fClearGps: "Supprimer les coordonnées GPS",
+      editNote: "« Enregistrer » crée une copie *_edited (l'original reste intact). « Nettoyer » supprime toutes les métadonnées (*_clean).",
+      btnSaveEdits: "Enregistrer les modifications",
+      btnStripHere: "Nettoyer tout",
+      loadingMeta: "Lecture des métadonnées…",
+      editedOk: "Enregistré → {name}",
+      editError: "Échec de l'enregistrement : {err}",
       disclaimer: "Une copie nettoyée *_clean est enregistrée à côté de l'original (les fichiers glissés vont dans Téléchargements). L'original n'est jamais modifié. Le ré-encodage JPEG/WebP peut légèrement recompresser l'image.",
       badgeExif: "EXIF",
       badgeGps: "GPS",
@@ -62,13 +79,13 @@
       title: "MetaStrip",
       subtitle: "Remove EXIF, GPS and metadata — 100% local",
       featuresTitle: "Features",
-      features: "Drop images (JPEG/PNG/WebP), see EXIF/GPS presence, strip metadata. A _clean copy is created — the original stays intact.",
+      features: "Drop images (JPEG/PNG/WebP), view EXIF/GPS/XMP metadata, edit it (author, copyright, GPS…) or strip everything. A _edited or _clean copy is created — the original stays intact.",
       badgeFree: "100% free",
       legalFree: "100% free",
       legalLocal: "100% local — no cloud, no telemetry",
       legalUpdates: "Updates not guaranteed — optional GitHub check",
       aboutTitle: "About — MetaStrip",
-      aboutBody: "Mr-Aurevo-X image metadata cleaner. 100% free, 100% local (Pillow). Removes EXIF, GPS, XMP and comments. Updates not guaranteed.",
+      aboutBody: "Mr-Aurevo-X image metadata viewer, editor & cleaner. 100% free, 100% local (Pillow). View, edit (author, copyright, GPS…) or remove EXIF, GPS, XMP and comments. Updates not guaranteed.",
       aboutRights: "Redistribution, reverse engineering, or stripping copyright is forbidden without written consent.",
       btnAbout: "About",
       btnClose: "Close",
@@ -87,6 +104,23 @@
       btnClear: "Clear list",
       btnClean: "Clean",
       btnFolder: "Folder",
+      btnDetail: "Preview / Edit",
+      previewTitle: "Current metadata",
+      previewEmpty: "No metadata detected.",
+      editTitle: "Edit / add",
+      fArtist: "Author / Artist",
+      fCopyright: "Copyright",
+      fDescription: "Description",
+      fSoftware: "Software",
+      fLat: "GPS latitude",
+      fLon: "GPS longitude",
+      fClearGps: "Remove GPS coordinates",
+      editNote: "\"Save\" writes a *_edited copy (the original stays intact). \"Clean\" removes all metadata (*_clean).",
+      btnSaveEdits: "Save changes",
+      btnStripHere: "Clean all",
+      loadingMeta: "Reading metadata…",
+      editedOk: "Saved → {name}",
+      editError: "Save failed: {err}",
       disclaimer: "A cleaned *_clean copy is saved next to the original (dropped files go to Downloads). The original is never modified. JPEG/WebP re-encoding may slightly recompress the image.",
       badgeExif: "EXIF",
       badgeGps: "GPS",
@@ -174,6 +208,7 @@
             : "") +
         `</div>` +
         `<div class="card-actions">` +
+          `<button type="button" class="btn ghost small" data-detail="${it.path}">${t("btnDetail")}</button>` +
           (it.cleaned
             ? `<button type="button" class="btn small" data-folder="${it.outPath || ""}">${t("btnFolder")}</button>`
             : `<button type="button" class="btn accent small" data-clean="${it.path}">${t("btnClean")}</button>`) +
@@ -182,6 +217,8 @@
       wrap.appendChild(card);
     });
 
+    wrap.querySelectorAll("[data-detail]").forEach((b) =>
+      b.addEventListener("click", () => openMeta(b.getAttribute("data-detail"))));
     wrap.querySelectorAll("[data-clean]").forEach((b) =>
       b.addEventListener("click", () => stripOne(b.getAttribute("data-clean"))));
     wrap.querySelectorAll("[data-remove]").forEach((b) =>
@@ -276,6 +313,122 @@
     renderCards();
     setStatus("");
     if (api && api.clear_temp) { try { await api.clear_temp(); } catch (_) {} }
+  }
+
+  /* ---------- Metadata preview / edit dialog ---------- */
+  let metaPath = null;
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function renderGroups(groups) {
+    const wrap = $("metaGroups");
+    wrap.innerHTML = "";
+    (groups || []).forEach((g) => {
+      const block = document.createElement("div");
+      block.className = "meta-group";
+      const rows = (g.entries || [])
+        .map((e) => `<dt title="${escapeHtml(e.key)}">${escapeHtml(e.key)}</dt><dd>${escapeHtml(e.value)}</dd>`)
+        .join("");
+      block.innerHTML =
+        `<div class="meta-group-title">${escapeHtml(g.title)}</div>` +
+        `<dl class="meta-kv">${rows}</dl>`;
+      wrap.appendChild(block);
+    });
+    $("metaEmpty").hidden = (groups || []).length > 0;
+  }
+
+  function fillForm(fields) {
+    const f = fields || {};
+    $("fArtist").value = f.artist || "";
+    $("fCopyright").value = f.copyright || "";
+    $("fDescription").value = f.description || "";
+    $("fSoftware").value = f.software || "";
+    $("fLat").value = f.gpsLat || "";
+    $("fLon").value = f.gpsLon || "";
+    $("fClearGps").checked = false;
+  }
+
+  async function openMeta(path) {
+    const it = items.get(path);
+    if (!it) return;
+    metaPath = path;
+    const dlg = $("metaDialog");
+    $("metaName").textContent = it.name || "";
+    $("metaFmt").textContent = `${it.format || "?"} · ${it.width}×${it.height} ${t("dimUnit")} · ${it.sizeText || ""}`;
+    $("metaThumb").src = it.thumb || "";
+    $("metaStatus").textContent = t("loadingMeta");
+    $("metaGroups").innerHTML = "";
+    $("metaEmpty").hidden = true;
+    $("metaFolder").hidden = true;
+    fillForm(null);
+    if (dlg && dlg.showModal && !dlg.open) dlg.showModal();
+    const api = await apiReady();
+    if (!api || !api.read_metadata) { $("metaStatus").textContent = ""; return; }
+    try {
+      const res = await api.read_metadata(path);
+      if (res && res.ok) {
+        renderGroups(res.groups);
+        fillForm(res.fields);
+        $("metaStatus").textContent = "";
+      } else {
+        $("metaStatus").textContent = fmt("statusError", { err: (res && res.error) || "?" });
+      }
+    } catch (e) {
+      $("metaStatus").textContent = fmt("statusError", { err: String((e && e.message) || e) });
+    }
+  }
+
+  function closeMeta() {
+    const dlg = $("metaDialog");
+    if (dlg && dlg.open) dlg.close();
+    metaPath = null;
+  }
+
+  async function saveEdits() {
+    if (!metaPath) return;
+    const api = await apiReady();
+    if (!api || !api.save_with_edits) return;
+    const edits = {
+      artist: $("fArtist").value,
+      copyright: $("fCopyright").value,
+      description: $("fDescription").value,
+      software: $("fSoftware").value,
+      gpsLat: $("fLat").value,
+      gpsLon: $("fLon").value,
+      clearGps: $("fClearGps").checked,
+    };
+    $("metaSave").disabled = true;
+    $("metaStatus").textContent = t("loadingMeta");
+    try {
+      const res = await api.save_with_edits(metaPath, edits);
+      if (res && res.ok) {
+        $("metaStatus").textContent = fmt("editedOk", { name: res.outName });
+        setStatus(fmt("editedOk", { name: res.outName }));
+        const folderBtn = $("metaFolder");
+        folderBtn.hidden = false;
+        folderBtn.onclick = async () => {
+          const a = await apiReady();
+          if (a && a.reveal) { try { await a.reveal(res.outPath); } catch (_) {} }
+        };
+      } else {
+        $("metaStatus").textContent = fmt("editError", { err: (res && res.error) || "?" });
+      }
+    } catch (e) {
+      $("metaStatus").textContent = fmt("editError", { err: String((e && e.message) || e) });
+    } finally {
+      $("metaSave").disabled = false;
+    }
+  }
+
+  async function stripFromDialog() {
+    if (!metaPath) return;
+    const path = metaPath;
+    closeMeta();
+    await stripOne(path);
   }
 
   /* ---------- Dropzone wiring ---------- */
@@ -382,6 +535,11 @@
   $("btnAdd").addEventListener("click", pickImages);
   $("btnStripAll").addEventListener("click", stripAll);
   $("btnClear").addEventListener("click", clearList);
+  if ($("metaSave")) $("metaSave").addEventListener("click", saveEdits);
+  if ($("metaStrip")) $("metaStrip").addEventListener("click", stripFromDialog);
+  if ($("metaClose")) $("metaClose").addEventListener("click", closeMeta);
+  if ($("metaCloseBtn")) $("metaCloseBtn").addEventListener("click", closeMeta);
+  if ($("metaDialog")) $("metaDialog").addEventListener("cancel", () => { metaPath = null; });
   if ($("btnUpdateNow")) $("btnUpdateNow").addEventListener("click", applyUpdateNow);
   if ($("btnUpdateLater")) $("btnUpdateLater").addEventListener("click", dismissUpdateLater);
 
