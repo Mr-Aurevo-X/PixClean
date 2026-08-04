@@ -82,3 +82,12 @@
 .about-card { background: var(--bg1); color: var(--text); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: grid; gap: 10px; }
 .about-card ul { margin: 0; padding-left: 1.1em; color: var(--muted); font-size: 0.85rem; }
 .about-note { font-size: 0.78rem; color: var(--muted); }
+
+/* Native <select> popup: WebView2/Edge composites a translucent select
+   background to white, leaving light option text unreadable. Force opaque,
+   theme-aware colors on the option list. */
+select option,
+select optgroup {
+  background-color: var(--panel2);
+  color: var(--text);
+}
