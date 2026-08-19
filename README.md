@@ -66,4 +66,13 @@ Produit `MetaStrip.exe` (fenêtré, icône, `ui/` embarqué). Lancement dev : `L
 
 ---
 
+## Soutien / Support
+
+Coups de pouce volontaires · optional tips (app remains free) :
+
+[![PayPal](https://img.shields.io/badge/PayPal-Donate-39ff14?style=for-the-badge&logo=paypal&logoColor=00f0ff&labelColor=050807)](https://www.paypal.com/paypalme/aurevo1)
+[![Revolut](https://img.shields.io/badge/Revolut-mr__aurevo__x-00f0ff?style=for-the-badge&logo=revolut&logoColor=39ff14&labelColor=050807)](https://revolut.me/mr_aurevo_x)
+
+---
+
 © 2026 Mr-Aurevo-X — all rights reserved.
