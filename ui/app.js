@@ -19,6 +19,8 @@
       legalFree: "100 % gratuit",
       legalLocal: "100 % local — aucun cloud, aucune télémétrie",
       legalUpdates: "Mise à jour non garantie — vérif. optionnelle GitHub",
+      privacy:
+        "Mr-Aurevo-X ne collecte aucune donnée. Traitement 100 % local (Pillow). Seul appel réseau optionnel : vérif. de mise à jour GitHub.",
       aboutTitle: "À propos — PixClean",
       aboutBody: "Nettoyeur et éditeur de métadonnées d'images Mr-Aurevo-X. 100 % gratuit, 100 % local (Pillow). Affiche, édite (auteur, copyright, GPS…) ou supprime EXIF, GPS, XMP et commentaires. Mise à jour non garantie.",
       aboutRights: "Redistribution, reverse engineering ou suppression du copyright interdits sans accord écrit.",
@@ -94,6 +96,8 @@
       legalFree: "100% free",
       legalLocal: "100% local — no cloud, no telemetry",
       legalUpdates: "Updates not guaranteed — optional GitHub check",
+      privacy:
+        "Mr-Aurevo-X does not collect your data. 100% local processing (Pillow). Only optional network call: GitHub update check.",
       aboutTitle: "About — PixClean",
       aboutBody: "Mr-Aurevo-X image metadata viewer, editor & cleaner. 100% free, 100% local (Pillow). View, edit (author, copyright, GPS…) or remove EXIF, GPS, XMP and comments. Updates not guaranteed.",
       aboutRights: "Redistribution, reverse engineering, or stripping copyright is forbidden without written consent.",
