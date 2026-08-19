@@ -1,10 +1,10 @@
-"""Optional GitHub updater for MetaStrip.
+"""Optional GitHub updater for PixClean.
 
 Legal: updates are not guaranteed (no SLA). Frozen/exe mode prefers the
-GitHub Release asset MetaStrip.exe; source mode uses git pull (clone) or the
+GitHub Release asset PixClean.exe; source mode uses git pull (clone) or the
 release source zipball. Sole optional network call.
 """
-# © 2026 Mr-Aurevo-X · MetaStrip · 100% local · free · updates not guaranteed
+# © 2026 Mr-Aurevo-X · PixClean · 100% local · free · updates not guaranteed
 from __future__ import annotations
 
 import json
@@ -20,8 +20,8 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
-APP_NAME = "MetaStrip"
-APP_SLUG = "metastrip"
+APP_NAME = "PixClean"
+APP_SLUG = "pixclean"
 RELEASE_REPO = f"Mr-Aurevo-X/{APP_NAME}"
 API_LATEST = f"https://api.github.com/repos/{RELEASE_REPO}/releases/latest"
 USER_AGENT = f"{APP_NAME}-Updater/1.0 (+https://github.com/{RELEASE_REPO})"

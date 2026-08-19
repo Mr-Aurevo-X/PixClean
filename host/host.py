@@ -1,13 +1,13 @@
-"""MetaStrip — nettoyeur de métadonnées d'images (100 % local).
+"""PixClean — nettoyeur de métadonnées d'images (100 % local).
 
-© 2026 Mr-Aurevo-X · MetaStrip · 100% local · free · updates not guaranteed
+© 2026 Mr-Aurevo-X · PixClean · 100% local · free · updates not guaranteed
 All rights reserved. Redistribution / reverse engineering without written consent forbidden.
 
 Drag-drop ou sélection d'images (JPEG/PNG/WebP), détection EXIF/GPS, puis
 suppression des métadonnées avec sauvegarde d'une copie *_clean (l'original
 n'est jamais modifié). Pillow, 100 % hors-ligne.
 """
-# © 2026 Mr-Aurevo-X · MetaStrip · 100% local · free · updates not guaranteed
+# © 2026 Mr-Aurevo-X · PixClean · 100% local · free · updates not guaranteed
 from __future__ import annotations
 
 import base64
@@ -783,7 +783,7 @@ def _apply_edits_path(
 
 
 class Api(WindowChromeMixin):
-    """JS bridge — © 2026 Mr-Aurevo-X · MetaStrip · all rights reserved."""
+    """JS bridge — © 2026 Mr-Aurevo-X · PixClean · all rights reserved."""
 
     def __init__(self) -> None:
         self._window = None
@@ -870,7 +870,7 @@ class Api(WindowChromeMixin):
             if suffix not in SUPPORTED_EXT:
                 return {"ok": False, "error": "unsupported", "name": name}
             token = uuid.uuid4().hex
-            tmp = Path(_local_appdata()) / "MetaStrip-tmp"
+            tmp = Path(_local_appdata()) / "PixClean-tmp"
             tmp.mkdir(parents=True, exist_ok=True)
             tmp_path = tmp / f"{token}{suffix}"
             tmp_path.write_bytes(blob)
@@ -979,14 +979,14 @@ class Api(WindowChromeMixin):
 
 
 def main() -> None:
-    # © 2026 Mr-Aurevo-X · MetaStrip · windowed host entry
+    # © 2026 Mr-Aurevo-X · PixClean · windowed host entry
     ui = ui_dir()
     index = ui / "index.html"
     if not index.is_file():
         raise SystemExit(f"UI missing: {index}")
     api = Api()
     create_tool_window(
-        title="MetaStrip — Mr-Aurevo-X",
+        title="PixClean — Mr-Aurevo-X",
         url=index.as_uri(),
         js_api=api,
         width=1120,
@@ -998,5 +998,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    # © 2026 Mr-Aurevo-X · MetaStrip · 100% local · free · updates not guaranteed
+    # © 2026 Mr-Aurevo-X · PixClean · 100% local · free · updates not guaranteed
     main()

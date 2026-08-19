@@ -1,25 +1,25 @@
 /**
- * MetaStrip — UI (proprietary)
- * © 2026 Mr-Aurevo-X · MetaStrip · 100% local · free · updates not guaranteed
+ * PixClean — UI (proprietary)
+ * © 2026 Mr-Aurevo-X · PixClean · 100% local · free · updates not guaranteed
  * All rights reserved. Do not strip copyright notices.
  */
 (() => {
   "use strict";
-  // © 2026 Mr-Aurevo-X · MetaStrip · 100% local · free · updates not guaranteed
+  // © 2026 Mr-Aurevo-X · PixClean · 100% local · free · updates not guaranteed
 
   const SUITE_I18N = {
     fr: {
-      tagline: "Nettoyeur de métadonnées",
+      tagline: "Nettoyeur EXIF · GPS · XMP",
       copyright: "Copyright © 2026 Mr-Aurevo-X — tous droits réservés",
-      title: "MetaStrip",
-      subtitle: "Supprimez EXIF, GPS et métadonnées — 100 % local",
+      title: "PixClean",
+      subtitle: "Retirez EXIF, GPS et XMP — 100 % local",
       featuresTitle: "Fonctions",
       features: "Glissez des images (JPEG/PNG/WebP), affichez les métadonnées EXIF/GPS/XMP, éditez-les (auteur, copyright, GPS…) ou supprimez tout. Copie _edited ou _clean — l'original reste intact.",
       badgeFree: "100 % gratuit",
       legalFree: "100 % gratuit",
       legalLocal: "100 % local — aucun cloud, aucune télémétrie",
       legalUpdates: "Mise à jour non garantie — vérif. optionnelle GitHub",
-      aboutTitle: "À propos — MetaStrip",
+      aboutTitle: "À propos — PixClean",
       aboutBody: "Nettoyeur et éditeur de métadonnées d'images Mr-Aurevo-X. 100 % gratuit, 100 % local (Pillow). Affiche, édite (auteur, copyright, GPS…) ou supprime EXIF, GPS, XMP et commentaires. Mise à jour non garantie.",
       aboutRights: "Redistribution, reverse engineering ou suppression du copyright interdits sans accord écrit.",
       btnAbout: "À propos",
@@ -84,17 +84,17 @@
       confirmClearNone: "Liste vide.",
     },
     en: {
-      tagline: "Metadata cleaner",
+      tagline: "EXIF · GPS · XMP cleaner",
       copyright: "Copyright © 2026 Mr-Aurevo-X — all rights reserved",
-      title: "MetaStrip",
-      subtitle: "Remove EXIF, GPS and metadata — 100% local",
+      title: "PixClean",
+      subtitle: "Strip EXIF, GPS and XMP — 100% local",
       featuresTitle: "Features",
       features: "Drop images (JPEG/PNG/WebP), view EXIF/GPS/XMP metadata, edit it (author, copyright, GPS…) or strip everything. A _edited or _clean copy is created — the original stays intact.",
       badgeFree: "100% free",
       legalFree: "100% free",
       legalLocal: "100% local — no cloud, no telemetry",
       legalUpdates: "Updates not guaranteed — optional GitHub check",
-      aboutTitle: "About — MetaStrip",
+      aboutTitle: "About — PixClean",
       aboutBody: "Mr-Aurevo-X image metadata viewer, editor & cleaner. 100% free, 100% local (Pillow). View, edit (author, copyright, GPS…) or remove EXIF, GPS, XMP and comments. Updates not guaranteed.",
       aboutRights: "Redistribution, reverse engineering, or stripping copyright is forbidden without written consent.",
       btnAbout: "About",

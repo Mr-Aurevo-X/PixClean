@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-# © 2026 Mr-Aurevo-X · MetaStrip · 100% local · free · updates not guaranteed
+# © 2026 Mr-Aurevo-X · PixClean · 100% local · free · updates not guaranteed
 # Proprietary binary — redistribution of sources/exe without written consent forbidden.
 
 a = Analysis(
@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='MetaStrip',
+    name='PixClean',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

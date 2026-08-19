@@ -1,10 +1,10 @@
 @echo off
-REM (c) 2026 Mr-Aurevo-X - MetaStrip - 100% local - free - updates not guaranteed
-REM Prefer windowed MetaStrip.exe (no lasting CMD). Fallback: detached pythonw.
+REM (c) 2026 Mr-Aurevo-X - PixClean - 100% local - free - updates not guaranteed
+REM Prefer windowed PixClean.exe (no lasting CMD). Fallback: detached pythonw.
 cd /d "%~dp0"
 
-if exist "%~dp0MetaStrip.exe" (
-  start "" /D "%~dp0" "%~dp0MetaStrip.exe"
+if exist "%~dp0PixClean.exe" (
+  start "" /D "%~dp0" "%~dp0PixClean.exe"
   exit /b 0
 )
 

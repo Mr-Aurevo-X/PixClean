@@ -1,7 +1,7 @@
-# MetaStrip
+# PixClean
 
-**Nettoyeur de métadonnées d'images — 100 % local, 100 % gratuit.**
-_Image metadata cleaner — 100% local, 100% free._
+**Nettoyeur EXIF · GPS · XMP — 100 % local, 100 % gratuit.**
+_EXIF · GPS · XMP metadata stripper — 100% local, 100% free._
 
 © 2026 Mr-Aurevo-X · Windows · aucune télémétrie · mises à jour non garanties.
 
@@ -9,10 +9,10 @@ _Image metadata cleaner — 100% local, 100% free._
 
 ## ⬇️ Télécharger / Download
 
-**[➜ Dernière version (MetaStrip.exe)](https://github.com/Mr-Aurevo-X/MetaStrip/releases/latest)**
+**[➜ Dernière version (PixClean.exe)](https://github.com/Mr-Aurevo-X/PixClean/releases/latest)**
 
-Téléchargez `MetaStrip.exe`, double-cliquez, c'est prêt. Aucune installation.
-_Download `MetaStrip.exe`, double-click, done. No install._
+Téléchargez `PixClean.exe`, double-cliquez, c'est prêt. Aucune installation.
+_Download `PixClean.exe`, double-click, done. No install._
 
 ---
 
@@ -35,9 +35,9 @@ _Download `MetaStrip.exe`, double-click, done. No install._
   _Add / edit: always-visible form to add or change Author, Copyright, Description,
   Software, Capture date and GPS coordinates — even on a bare image. Save with this
   metadata → `name_edited.ext` copy (no stripping)._
-- **Nettoyage** : supprime toutes les métadonnées et enregistre une copie
+- **Nettoyage** : supprime EXIF, GPS, XMP et commentaires ; enregistre une copie
   `nom_clean.ext`. **L'original n'est jamais modifié.**
-  _Strips all metadata and saves a `name_clean.ext` copy. The original is never touched._
+  _Strips EXIF, GPS, XMP and comments; saves a `name_clean.ext` copy. The original is never touched._
 - Aperçu miniature, taille, dimensions, format. Interface FR / EN.
 
 100 % hors-ligne (Pillow). _100% offline (Pillow)._
@@ -62,7 +62,7 @@ pip install -r requirements.txt
 Build.cmd
 ```
 
-Produit `MetaStrip.exe` (fenêtré, icône, `ui/` embarqué). Lancement dev : `Lancer.bat`.
+Produit `PixClean.exe` (fenêtré, icône, `ui/` embarqué). Lancement dev : `Lancer.bat`.
 
 ---
 

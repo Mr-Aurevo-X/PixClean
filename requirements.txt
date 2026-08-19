@@ -1,4 +1,4 @@
-# © 2026 Mr-Aurevo-X · MetaStrip · 100% local · free · updates not guaranteed
+# © 2026 Mr-Aurevo-X · PixClean · 100% local · free · updates not guaranteed
 pywebview>=5.0
 Pillow>=10.0
 pyinstaller>=6.0
