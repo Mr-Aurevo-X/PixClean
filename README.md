@@ -7,16 +7,19 @@ _EXIF · GPS · XMP metadata stripper — 100% local, 100% free._
 
 ---
 
-## ⬇️ Télécharger / Download
+## Télécharger / Download
 
 **[➜ Dernière version (PixClean.exe)](https://github.com/Mr-Aurevo-X/PixClean/releases/latest)**
 
 Téléchargez `PixClean.exe`, double-cliquez, c'est prêt. Aucune installation.
 _Download `PixClean.exe`, double-click, done. No install._
 
+Windows peut afficher « potentiellement dangereux » : les binaires ne sont pas signés Authenticode (pas de certificat éditeur payant). C’est un avertissement de réputation SmartScreen, pas un verdict antivirus.  
+_Windows may flag the app as potentially unsafe: binaries are not Authenticode-signed (no paid publisher certificate). That is a SmartScreen reputation warning, not an antivirus verdict._
+
 ---
 
-## ✨ Fonctions / Features
+## Fonctions / Features
 
 - **Glisser-déposer** d'images JPEG · PNG · WebP (ou bouton « Ajouter »).
   _Drag & drop JPEG · PNG · WebP images (or "Add" button)._
@@ -44,7 +47,7 @@ _Download `PixClean.exe`, double-click, done. No install._
 
 ---
 
-## ⚖️ Légal / Legal
+## Légal / Legal
 
 - **100 % local** : vos images ne quittent jamais votre PC.
 - **100 % gratuit** pour usage personnel.
@@ -55,7 +58,7 @@ _Download `PixClean.exe`, double-click, done. No install._
 
 ---
 
-## 🔧 Build (dev)
+## ðŸ”§ Build (dev)
 
 ```bat
 pip install -r requirements.txt
@@ -76,3 +79,8 @@ Coups de pouce volontaires · optional tips (app remains free) :
 ---
 
 © 2026 Mr-Aurevo-X — all rights reserved.
+---
+
+Rêvée par **Mr-Aurevo-X**. Cursor a réalisé le rêve.
+
+[Discord](https://discord.com/users/406891052516114442) · [PayPal](https://www.paypal.com/paypalme/aurevo1) · [Revolut](https://revolut.me/mr_aurevo_x)
