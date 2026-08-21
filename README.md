@@ -10,7 +10,7 @@ _EXIF · GPS · XMP metadata stripper — 100% local, 100% free._
 
 ## Capture d'écran / Screenshot
 
-Void Glow UI (kit pc-command) — chrome outil, sans Accueil hub.
+Filament Void Glow — title bar minimale (tb-min) + glow only, sans Accueil hub.
 
 ![ PixClean Void Glow ](docs/screenshots/ui-void-glow.png)
 
