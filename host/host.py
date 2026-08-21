@@ -863,6 +863,12 @@ class Api(WindowChromeMixin):
     def set_auto_update(self, enabled: bool = False) -> dict:
         return app_updater.set_auto_update(bool(enabled))
 
+    def set_check_updates(self, enabled: bool = True) -> dict:
+        return app_updater.set_check_updates(bool(enabled))
+
+    def get_update_prefs(self) -> dict:
+        return app_updater.get_update_prefs()
+
     # ---- core: pick / analyze / strip ---------------------------------
 
     def pick_images(self) -> dict:

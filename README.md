@@ -55,6 +55,7 @@ _Windows may flag the app as potentially unsafe: binaries are not Authenticode-s
 ## Légal / Legal
 
 - **100 % local** : vos images ne quittent jamais votre PC.
+- Seul appel réseau optionnel : vérif. de version GitHub Releases (désactivable dans **À propos**). Mises à jour non garanties.
 - **100 % gratuit** pour usage personnel.
 - **Mises à jour non garanties** (best-effort via GitHub Releases).
 - Le nettoyage ré-encode l'image (JPEG/WebP légèrement recompressés) ; l'original

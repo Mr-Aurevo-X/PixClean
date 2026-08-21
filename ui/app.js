@@ -23,13 +23,16 @@
       badgeFree: "100 % gratuit",
       legalFree: "100 % gratuit",
       legalLocal: "100 % local — aucun cloud, aucune télémétrie",
-      legalUpdates: "Mise à jour non garantie — vérif. optionnelle GitHub",
+      legalUpdates: "100 % local sauf vérif. optionnelle GitHub Releases (désactivable)",
       privacy:
-        "Mr-Aurevo-X ne collecte aucune donnée. Traitement 100 % local (Pillow). Seul appel réseau optionnel : vérif. de mise à jour GitHub.",
+        "Mr-Aurevo-X ne collecte aucune donnée. Traitement 100 % local (Pillow). Seul appel réseau optionnel : vérif. de version GitHub Releases (désactivable dans À propos).",
       aboutTitle: "À propos — PixClean",
       aboutBody: "Nettoyeur et éditeur de métadonnées d'images Mr-Aurevo-X. 100 % gratuit, 100 % local (Pillow). Affiche, édite (auteur, copyright, GPS…) ou supprime EXIF, GPS, XMP et commentaires. Mise à jour non garantie.",
       aboutRights: "Redistribution, reverse engineering ou suppression du copyright interdits sans accord écrit.",
       btnAbout: "À propos",
+      btnDisableUpdateCheck: "Désactiver la vérif. GitHub",
+      btnEnableUpdateCheck: "Réactiver la vérif. GitHub",
+      aboutNetNote: "100 % local — seule connexion hors machine optionnelle : vérif. de version GitHub Releases.",
       btnClose: "Fermer",
       updateTitle: "Nouvelle version disponible",
       updateDetail: "v{local} → v{remote}",
@@ -100,13 +103,16 @@
       badgeFree: "100% free",
       legalFree: "100% free",
       legalLocal: "100% local — no cloud, no telemetry",
-      legalUpdates: "Updates not guaranteed — optional GitHub check",
+      legalUpdates: "100% local except optional GitHub Releases check (can disable)",
       privacy:
-        "Mr-Aurevo-X does not collect your data. 100% local processing (Pillow). Only optional network call: GitHub update check.",
+        "Mr-Aurevo-X does not collect your data. 100% local processing (Pillow). Only optional network call: GitHub Releases version check (disable in About).",
       aboutTitle: "About — PixClean",
       aboutBody: "Mr-Aurevo-X image metadata viewer, editor & cleaner. 100% free, 100% local (Pillow). View, edit (author, copyright, GPS…) or remove EXIF, GPS, XMP and comments. Updates not guaranteed.",
       aboutRights: "Redistribution, reverse engineering, or stripping copyright is forbidden without written consent.",
       btnAbout: "About",
+      btnDisableUpdateCheck: "Disable GitHub update check",
+      btnEnableUpdateCheck: "Enable GitHub update check",
+      aboutNetNote: "100% local — only optional off-machine call: GitHub Releases version check.",
       btnClose: "Close",
       updateTitle: "New version available",
       updateDetail: "v{local} → v{remote}",
@@ -573,8 +579,45 @@
     $("updateBanner").hidden = false;
   }
   function hideUpdateBanner() { if ($("updateBanner")) $("updateBanner").hidden = true; }
+  
+  let updateCheckEnabled = true;
+
+  async function refreshUpdateCheckButton(api) {
+    const btn = document.getElementById("btnToggleUpdateCheck");
+    const note = document.querySelector(".about-net");
+    if (!btn) return;
+    try {
+      if (api && api.get_update_prefs) {
+        const prefs = await api.get_update_prefs();
+        if (prefs && prefs.ok) updateCheckEnabled = prefs.checkUpdates !== false;
+      }
+    } catch (_) {}
+    btn.textContent = updateCheckEnabled
+      ? (typeof t === "function" ? t("btnDisableUpdateCheck") : "Désactiver la vérif. GitHub")
+      : (typeof t === "function" ? t("btnEnableUpdateCheck") : "Réactiver la vérif. GitHub");
+    if (note && typeof t === "function") note.textContent = t("aboutNetNote");
+  }
+
+  async function toggleUpdateCheck() {
+    const api = typeof apiReady === "function" ? await apiReady() : (window.pywebview && window.pywebview.api);
+    if (!api || !api.set_check_updates) return;
+    const next = !updateCheckEnabled;
+    try {
+      const res = await api.set_check_updates(next);
+      if (res && res.ok) updateCheckEnabled = res.checkUpdates !== false;
+    } catch (_) {}
+    await refreshUpdateCheckButton(api);
+  }
+
   async function runUpdateCheck(api) {
     if (!api || !api.check_for_update) return;
+    try {
+      if (api.get_update_prefs) {
+        const prefs = await api.get_update_prefs();
+        if (prefs && prefs.ok && prefs.checkUpdates === false) return;
+      }
+    } catch (_) {}
+
     try {
       const info = await api.check_for_update();
       if (!info || !info.ok || !info.updateAvailable) return;
@@ -603,7 +646,14 @@
   }
 
   /* ---------- Wire ---------- */
-  $("btnAbout").addEventListener("click", () => { const d = $("aboutDialog"); if (d && d.showModal) d.showModal(); });
+  $("btnAbout").addEventListener("click", async () => {
+    try {
+      const api = window.pywebview && window.pywebview.api;
+      await refreshUpdateCheckButton(api);
+    } catch (_) {}
+    const d = $("aboutDialog"); if (d && d.showModal) d.showModal();
+  });
+  $("btnToggleUpdateCheck")?.addEventListener("click", (ev) => { ev.preventDefault(); toggleUpdateCheck(); });
   $("btnAdd").addEventListener("click", pickImages);
   $("btnStripAll").addEventListener("click", stripAll);
   $("btnClear").addEventListener("click", clearList);
