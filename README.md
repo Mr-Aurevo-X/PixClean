@@ -7,6 +7,13 @@ _EXIF · GPS · XMP metadata stripper — 100% local, 100% free._
 
 ---
 
+
+## Capture d'écran / Screenshot
+
+Void Glow UI (kit pc-command) — chrome outil, sans Accueil hub.
+
+![ PixClean Void Glow ](docs/screenshots/ui-void-glow.png)
+
 ## Télécharger / Download
 
 **[➜ Dernière version (PixClean.exe)](https://github.com/Mr-Aurevo-X/PixClean/releases/latest)**
