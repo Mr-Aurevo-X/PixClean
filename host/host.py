@@ -869,6 +869,9 @@ class Api(WindowChromeMixin):
     def get_update_prefs(self) -> dict:
         return app_updater.get_update_prefs()
 
+    def get_about_local_paths(self) -> dict:
+        return app_updater.about_local_paths()
+
     # ---- core: pick / analyze / strip ---------------------------------
 
     def pick_images(self) -> dict:
