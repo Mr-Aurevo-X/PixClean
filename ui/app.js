@@ -30,6 +30,9 @@
       aboutBody: "Nettoyeur et éditeur de métadonnées d'images Mr-Aurevo-X. 100 % gratuit, 100 % local (Pillow). Affiche, édite (auteur, copyright, GPS…) ou supprime EXIF, GPS, XMP et commentaires. Mise à jour non garantie.",
       aboutRights: "Redistribution, reverse engineering ou suppression du copyright interdits sans accord écrit.",
       btnAbout: "À propos",
+      aboutRepoLabel: "Repo GitHub (releases)",
+      btnCopyRepo: "Copier",
+      aboutCopied: "Lien copié.",
       btnDisableUpdateCheck: "Désactiver la vérif. GitHub",
       btnEnableUpdateCheck: "Réactiver la vérif. GitHub",
       aboutNetNote: "100 % local — seule connexion hors machine optionnelle : vérif. de version GitHub Releases.",
@@ -110,6 +113,9 @@
       aboutBody: "Mr-Aurevo-X image metadata viewer, editor & cleaner. 100% free, 100% local (Pillow). View, edit (author, copyright, GPS…) or remove EXIF, GPS, XMP and comments. Updates not guaranteed.",
       aboutRights: "Redistribution, reverse engineering, or stripping copyright is forbidden without written consent.",
       btnAbout: "About",
+      aboutRepoLabel: "GitHub repo (releases)",
+      btnCopyRepo: "Copy",
+      aboutCopied: "Link copied.",
       btnDisableUpdateCheck: "Disable GitHub update check",
       btnEnableUpdateCheck: "Enable GitHub update check",
       aboutNetNote: "100% local — only optional off-machine call: GitHub Releases version check.",
@@ -582,6 +588,46 @@
   
   let updateCheckEnabled = true;
 
+  
+  async function fillAboutRepo(api) {
+    const input = document.getElementById("aboutRepoUrl");
+    if (!input) return;
+    try {
+      let repo = null;
+      if (api && api.get_update_prefs) {
+        const prefs = await api.get_update_prefs();
+        if (prefs && prefs.repoUrl) repo = prefs.repoUrl;
+        else if (prefs && prefs.repo) repo = "https://github.com/" + prefs.repo;
+      }
+      if (!repo && api && api.get_version) {
+        const ver = await api.get_version();
+        if (ver && ver.repo) repo = "https://github.com/" + ver.repo;
+      }
+      if (repo) input.value = repo;
+    } catch (_) {}
+  }
+
+  async function copyAboutRepo() {
+    const input = document.getElementById("aboutRepoUrl");
+    const hint = document.getElementById("aboutCopyHint");
+    const url = (input && input.value || "").trim();
+    if (!url) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        input.focus();
+        input.select();
+        document.execCommand("copy");
+      }
+      if (hint) {
+        hint.hidden = false;
+        hint.textContent = typeof t === "function" ? t("aboutCopied") : "Lien copié.";
+        setTimeout(() => { hint.hidden = true; }, 1600);
+      }
+    } catch (_) {}
+  }
+
   async function refreshUpdateCheckButton(api) {
     const btn = document.getElementById("btnToggleUpdateCheck");
     const note = document.querySelector(".about-net");
@@ -596,6 +642,10 @@
       ? (typeof t === "function" ? t("btnDisableUpdateCheck") : "Désactiver la vérif. GitHub")
       : (typeof t === "function" ? t("btnEnableUpdateCheck") : "Réactiver la vérif. GitHub");
     if (note && typeof t === "function") note.textContent = t("aboutNetNote");
+    const repoLbl = document.querySelector('label[for="aboutRepoUrl"]');
+    const btnCopy = document.getElementById("btnCopyRepo");
+    if (repoLbl && typeof t === "function") repoLbl.textContent = t("aboutRepoLabel");
+    if (btnCopy && typeof t === "function") btnCopy.textContent = t("btnCopyRepo");
   }
 
   async function toggleUpdateCheck() {
@@ -607,6 +657,7 @@
       if (res && res.ok) updateCheckEnabled = res.checkUpdates !== false;
     } catch (_) {}
     await refreshUpdateCheckButton(api);
+    await fillAboutRepo(api);
   }
 
   async function runUpdateCheck(api) {
@@ -650,10 +701,13 @@
     try {
       const api = window.pywebview && window.pywebview.api;
       await refreshUpdateCheckButton(api);
+      await fillAboutRepo(api);
     } catch (_) {}
     const d = $("aboutDialog"); if (d && d.showModal) d.showModal();
   });
   $("btnToggleUpdateCheck")?.addEventListener("click", (ev) => { ev.preventDefault(); toggleUpdateCheck(); });
+  $("btnCopyRepo")?.addEventListener("click", (ev) => { ev.preventDefault(); copyAboutRepo(); });
+  $("aboutRepoUrl")?.addEventListener("focus", (ev) => { try { ev.target.select(); } catch (_) {} });
   $("btnAdd").addEventListener("click", pickImages);
   $("btnStripAll").addEventListener("click", stripAll);
   $("btnClear").addEventListener("click", clearList);
