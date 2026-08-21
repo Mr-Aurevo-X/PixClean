@@ -86,7 +86,8 @@
 
 .disclaimer { margin-top: 16px; font-size: 0.74rem; color: var(--muted); line-height: 1.5; }
 .disclaimer code { font-family: var(--mono); color: var(--text); }
-.status { margin-top: 10px; font-size: 0.85rem; color: var(--accent); min-height: 1.2em; }
+.status { margin-top: 10px; font-size: 0.85rem; color: var(--muted, rgba(255, 255, 255, 0.55)); min-height: 1.2em; }
+.status.is-ready { color: #3dd68c; font-weight: 600; }
 
 .about-dialog { border: none; padding: 0; background: transparent; max-width: 440px; }
 .about-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }

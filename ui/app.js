@@ -17,17 +17,18 @@
       tagline: "Nettoyeur EXIF · GPS · XMP",
       copyright: "Copyright © 2026 Mr-Aurevo-X — tous droits réservés",
       title: "PixClean",
-      subtitle: "Retirez EXIF, GPS et XMP — 100 % local",
+      subtitle: "Retirez EXIF, GPS et XMP — 100% local",
       featuresTitle: "Fonctions",
       features: "Glissez des images (JPEG/PNG/WebP), affichez les métadonnées EXIF/GPS/XMP, éditez-les (auteur, copyright, GPS…) ou supprimez tout. Copie _edited ou _clean — l'original reste intact.",
-      badgeFree: "100 % gratuit",
-      legalFree: "100 % gratuit",
-      legalLocal: "100 % local — aucun cloud, aucune télémétrie",
-      legalUpdates: "100 % local sauf vérif. optionnelle GitHub Releases (désactivable)",
-      privacy:
-        "Mr-Aurevo-X ne collecte aucune donnée. Traitement 100 % local (Pillow). Seul appel réseau optionnel : vérif. de version GitHub Releases (désactivable dans À propos).",
+      badgeFree: "100% gratuit",
+      legalFree: "100% gratuit",
+      legalLocal:
+        "100% sans télémétrie — seule connexion : vérif. versions",
+      legalUpdates:
+        "100% sans télémétrie — seule connexion : vérif. versions",
+      privacy: "Détail légal, chemins locaux et options réseau : À propos.",
       aboutTitle: "À propos — PixClean",
-      aboutBody: "Nettoyeur et éditeur de métadonnées d'images Mr-Aurevo-X. 100 % gratuit, 100 % local (Pillow). Affiche, édite (auteur, copyright, GPS…) ou supprime EXIF, GPS, XMP et commentaires. Mise à jour non garantie.",
+      aboutBody: "Nettoyeur et éditeur de métadonnées d'images Mr-Aurevo-X. 100% gratuit, 100% local (Pillow). Affiche, édite (auteur, copyright, GPS…) ou supprime EXIF, GPS, XMP et commentaires. Mise à jour non garantie.",
       aboutRights: "Redistribution, reverse engineering ou suppression du copyright interdits sans accord écrit.",
       btnAbout: "À propos",
       aboutRepoLabel: "Repo GitHub (releases)",
@@ -35,9 +36,10 @@
       aboutCopied: "Lien copié.",
 
       langSwitchAria: "Langue",
+      supportNote: "Si le boulot te plaît, un café — sinon profite.",
       aboutToggle: "Vérifier les nouvelles versions sur GitHub",
       aboutHintOn: "Quand activé : un appel API GitHub au démarrage (lecture seule, pas de téléchargement).",
-      aboutHintOff: "Désactivé : aucune requête GitHub. 100 % local hors actions utilisateur.",
+      aboutHintOff: "Désactivé : aucune requête GitHub. 100% local hors actions utilisateur.",
       aboutVersion: "Version {ver}",
       aboutLegalTerms: "CGU",
       aboutLegalPrivacy: "Confidentialité",
@@ -50,7 +52,7 @@
       btnCopyPath: "Copier",
       btnDisableUpdateCheck: "Désactiver la vérif. GitHub",
       btnEnableUpdateCheck: "Réactiver la vérif. GitHub",
-      aboutNetNote: "100 % local — seule connexion hors machine optionnelle : vérif. de version GitHub Releases.",
+      aboutNetNote: "100% local — seule connexion hors machine optionnelle : vérif. de version GitHub Releases.",
       btnClose: "Fermer",
       updateTitle: "Nouvelle version disponible",
       updateDetail: "v{local} → v{remote}",
@@ -120,10 +122,11 @@
       features: "Drop images (JPEG/PNG/WebP), view EXIF/GPS/XMP metadata, edit it (author, copyright, GPS…) or strip everything. A _edited or _clean copy is created — the original stays intact.",
       badgeFree: "100% free",
       legalFree: "100% free",
-      legalLocal: "100% local — no cloud, no telemetry",
-      legalUpdates: "100% local except optional GitHub Releases check (can disable)",
-      privacy:
-        "Mr-Aurevo-X does not collect your data. 100% local processing (Pillow). Only optional network call: GitHub Releases version check (disable in About).",
+      legalLocal:
+        "100% no telemetry — only network: version check",
+      legalUpdates:
+        "100% no telemetry — only network: version check",
+      privacy: "Legal details, local paths and network options: About.",
       aboutTitle: "About — PixClean",
       aboutBody: "Mr-Aurevo-X image metadata viewer, editor & cleaner. 100% free, 100% local (Pillow). View, edit (author, copyright, GPS…) or remove EXIF, GPS, XMP and comments. Updates not guaranteed.",
       aboutRights: "Redistribution, reverse engineering, or stripping copyright is forbidden without written consent.",
@@ -133,6 +136,7 @@
       aboutCopied: "Link copied.",
 
       langSwitchAria: "Language",
+      supportNote: "If you like the work, a coffee — otherwise enjoy.",
       aboutToggle: "Check for new versions on GitHub",
       aboutHintOn: "When on: one GitHub API call at startup (read-only, no download).",
       aboutHintOff: "Off: no GitHub requests. 100% local except user actions.",
@@ -220,7 +224,16 @@
   };
 
   const $ = (id) => document.getElementById(id);
-  const setStatus = (m) => { $("status").textContent = m || ""; };
+  const setStatus = (m) => {
+    const node = $("status");
+    if (!node) return;
+    const text = m || "";
+    node.textContent = text;
+    const readyFr = SUITE_I18N.fr.ready;
+    const readyEn = SUITE_I18N.en.ready;
+    const isReady = !!text && (text === t("ready") || text === readyFr || text === readyEn);
+    node.classList.toggle("is-ready", isReady);
+  };
 
   function apiReady() {
     return new Promise((resolve) => {
@@ -715,12 +728,17 @@
     try { if (typeof state !== "undefined" && state) state.lang = next; } catch (_) {}
     document.documentElement.lang = next;
     syncLangSwitch(next);
-    if (typeof applyI18n === "function") applyI18n();
-    else if (window.suite && typeof window.suite.applyI18n === "function" && typeof SUITE_I18N !== "undefined") {
-      window.suite.applyI18n(next, SUITE_I18N);
+    const suiteApi = window.MrAurevoXSuite || window.suite;
+    if (suiteApi && typeof suiteApi.applyI18n === "function" && typeof SUITE_I18N !== "undefined") {
+      suiteApi.applyI18n(next, SUITE_I18N);
     }
     if (typeof refreshLabels === "function") refreshLabels();
     if (typeof applyLabels === "function") applyLabels();
+    if (typeof refreshChromeLabels === "function") refreshChromeLabels();
+    try {
+      if (typeof renderCards === "function") renderCards();
+      if (typeof setStatus === "function" && typeof t === "function") setStatus(t("ready"));
+    } catch (_) {}
     try {
       const api = typeof apiReady === "function" ? await apiReady() : (window.pywebview && window.pywebview.api);
       await refreshUpdateCheckButton(api);
